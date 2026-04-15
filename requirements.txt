@@ -1,0 +1,14 @@
+# Core runtime dependencies
+sounddevice>=0.4.6
+numpy>=1.24
+pynput>=1.7.6
+pyperclip>=1.8.2
+openai>=1.30.0
+
+# Optional: system-tray icon (nice-to-have; polyglot runs without these)
+pystray>=0.19.5
+pillow>=10.0
+
+# Optional: fully-offline transcription. Uncomment to install.
+#   (Also requires ffmpeg on your PATH.)
+# openai-whisper>=20231117
