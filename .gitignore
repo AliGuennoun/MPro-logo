@@ -1,9 +1,35 @@
+# Node
 node_modules/
+
+# Secrets & logs
 .env
 .env.local
 *.log
+
+# OS / editor noise
 .DS_Store
 .vscode/
 .idea/
+
+# Build output
 dist/
 build/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Local virtualenvs (created by install.sh / install.bat)
+.venv/
+venv/
+env/
+
+# Generated launchers
+/polyglot
+/polyglot.bat
+
+# PyInstaller
+*.spec
