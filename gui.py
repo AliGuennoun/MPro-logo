@@ -444,82 +444,96 @@ class SettingsDialog(ctk.CTkToplevel):
         self.config = app.config
         self.on_saved = on_saved
         self.title("Settings")
-        self.geometry("540x560")
-        self.resizable(False, False)
+        self.geometry("560x540")
+        self.minsize(460, 360)
         # Modal behaviour
         self.transient(parent)
         self.grab_set()
 
+        # Two-row layout: scrollable content on top, pinned footer below.
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        # Scrollable content area ------------------------------------------
+        body = ctk.CTkScrollableFrame(self, corner_radius=0)
+        body.grid(row=0, column=0, sticky="nsew")
+        body.grid_columnconfigure(0, weight=1)
+
         pad = {"padx": 20, "pady": (8, 0)}
 
-        # API Key + base URL
-        self._section("Provider", row=0)
+        # Provider
+        self._section(body, "Provider", row=0)
 
-        self._field("API key", row=1, pad=pad)
-        self.api_key_entry = ctk.CTkEntry(self, show="•")
+        self._field(body, "API key", row=1, pad=pad)
+        self.api_key_entry = ctk.CTkEntry(body, show="•")
         self.api_key_entry.insert(0, self.config.api_key)
         self.api_key_entry.grid(row=2, column=0, sticky="ew", padx=20)
 
-        self._field("Base URL (for Groq, OpenRouter, …)", row=3, pad=pad)
-        self.base_url_entry = ctk.CTkEntry(self)
+        self._field(body, "Base URL (for Groq, OpenRouter, …)", row=3, pad=pad)
+        self.base_url_entry = ctk.CTkEntry(body)
         self.base_url_entry.insert(0, self.config.base_url)
         self.base_url_entry.grid(row=4, column=0, sticky="ew", padx=20)
 
         # Models
-        self._section("Models", row=5)
+        self._section(body, "Models", row=5)
 
-        self._field("Transcription model", row=6, pad=pad)
-        self.model_entry = ctk.CTkEntry(self)
+        self._field(body, "Transcription model", row=6, pad=pad)
+        self.model_entry = ctk.CTkEntry(body)
         self.model_entry.insert(0, self.config.model)
         self.model_entry.grid(row=7, column=0, sticky="ew", padx=20)
 
-        self._field("LLM model (for translate / cleanup)", row=8, pad=pad)
-        self.llm_entry = ctk.CTkEntry(self)
+        self._field(body, "LLM model (for translate / cleanup)", row=8, pad=pad)
+        self.llm_entry = ctk.CTkEntry(body)
         self.llm_entry.insert(0, self.config.llm_model)
         self.llm_entry.grid(row=9, column=0, sticky="ew", padx=20)
 
         # Hotkey + audio
-        self._section("Input", row=10)
+        self._section(body, "Input", row=10)
 
-        self._field("Hotkey (pynput format)", row=11, pad=pad)
-        self.hotkey_entry = ctk.CTkEntry(self)
+        self._field(body, "Hotkey (pynput format)", row=11, pad=pad)
+        self.hotkey_entry = ctk.CTkEntry(body)
         self.hotkey_entry.insert(0, self.config.hotkey)
         self.hotkey_entry.grid(row=12, column=0, sticky="ew", padx=20)
 
         # Silence thresholds (sliders)
-        self._field("Silence auto-stop (seconds, 0 = disabled)", row=13, pad=pad)
-        self.silence_slider = ctk.CTkSlider(self, from_=0, to=5, number_of_steps=50)
+        self._field(body, "Silence auto-stop (seconds, 0 = disabled)", row=13, pad=pad)
+        self.silence_slider = ctk.CTkSlider(body, from_=0, to=5, number_of_steps=50)
         self.silence_slider.set(self.config.silence_duration)
         self.silence_slider.grid(row=14, column=0, sticky="ew", padx=20)
 
-        self._field("Silence threshold (higher = needs louder voice)", row=15, pad=pad)
-        self.threshold_slider = ctk.CTkSlider(self, from_=0.001, to=0.1, number_of_steps=100)
+        self._field(body, "Silence threshold (higher = needs louder voice)", row=15, pad=pad)
+        self.threshold_slider = ctk.CTkSlider(body, from_=0.001, to=0.1, number_of_steps=100)
         self.threshold_slider.set(self.config.silence_threshold)
         self.threshold_slider.grid(row=16, column=0, sticky="ew", padx=20)
 
-        # Buttons
-        btns = ctk.CTkFrame(self, fg_color="transparent")
-        btns.grid(row=20, column=0, sticky="ew", padx=16, pady=16)
-        btns.grid_columnconfigure(0, weight=1)
+        # Spacer so the last field isn't jammed against the footer.
+        ctk.CTkLabel(body, text="").grid(row=99, column=0, pady=(0, 8))
+
+        # Pinned footer with Cancel / Save ---------------------------------
+        footer = ctk.CTkFrame(self, corner_radius=0, height=64)
+        footer.grid(row=1, column=0, sticky="ew")
+        footer.grid_columnconfigure(0, weight=1)
 
         ctk.CTkButton(
-            btns, text="Cancel", fg_color="transparent", border_width=1,
+            footer, text="Cancel", fg_color="transparent", border_width=1,
             width=100, command=self.destroy,
-        ).grid(row=0, column=1, padx=(0, 8))
+        ).grid(row=0, column=1, padx=(0, 8), pady=12)
         ctk.CTkButton(
-            btns, text="Save", width=100, command=self._save,
-        ).grid(row=0, column=2)
+            footer, text="Save", width=120, command=self._save,
+        ).grid(row=0, column=2, padx=(0, 16), pady=12)
 
-        self.grid_columnconfigure(0, weight=1)
+        # Enter saves, Esc cancels.
+        self.bind("<Return>", lambda _e: self._save())
+        self.bind("<Escape>", lambda _e: self.destroy())
 
-    def _section(self, title: str, row: int) -> None:
-        lbl = ctk.CTkLabel(self, text=title.upper(),
+    def _section(self, parent, title: str, row: int) -> None:
+        lbl = ctk.CTkLabel(parent, text=title.upper(),
                            font=ctk.CTkFont(size=10, weight="bold"),
                            text_color=("#6b7489", "#6b7489"))
         lbl.grid(row=row, column=0, sticky="w", padx=20, pady=(16, 4))
 
-    def _field(self, text: str, row: int, pad: dict) -> None:
-        lbl = ctk.CTkLabel(self, text=text, font=ctk.CTkFont(size=12))
+    def _field(self, parent, text: str, row: int, pad: dict) -> None:
+        lbl = ctk.CTkLabel(parent, text=text, font=ctk.CTkFont(size=12))
         lbl.grid(row=row, column=0, sticky="w", **pad)
 
     def _save(self) -> None:
