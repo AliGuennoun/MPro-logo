@@ -35,6 +35,7 @@ if errorlevel 1 (
 >> polyglot.bat echo setlocal
 >> polyglot.bat echo cd /d "%%~dp0"
 >> polyglot.bat echo ".venv\Scripts\python.exe" polyglot.py %%*
+>> polyglot.bat echo if errorlevel 1 pause
 
 echo.
 echo ==^> Done.
