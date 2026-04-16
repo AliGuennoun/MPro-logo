@@ -25,11 +25,13 @@ class Transcriber:
         api_key: Optional[str] = None,
         model: str = "whisper-1",
         language: Optional[str] = None,
+        base_url: Optional[str] = None,
     ) -> None:
         self.provider = provider.lower()
         self.api_key = api_key
         self.model = model
         self.language = language
+        self.base_url = base_url or None
         self._client = None
         self._local_model = None
 
@@ -40,10 +42,10 @@ class Transcriber:
             return self._transcribe_local(audio_path)
         raise TranscriptionError(f"Unknown provider: {self.provider}")
 
-    # ---------------- OpenAI API ----------------
+    # ---------------- OpenAI-compatible API ----------------
     def _transcribe_openai(self, audio_path: str) -> str:
         if not self.api_key:
-            raise TranscriptionError("OPENAI_API_KEY is not set")
+            raise TranscriptionError("API key is not set (OPENAI_API_KEY)")
 
         if self._client is None:
             try:
@@ -52,7 +54,11 @@ class Transcriber:
                 raise TranscriptionError(
                     "The 'openai' package is required. Install with: pip install openai"
                 ) from exc
-            self._client = OpenAI(api_key=self.api_key)
+            client_kwargs: dict = {"api_key": self.api_key}
+            if self.base_url:
+                client_kwargs["base_url"] = self.base_url
+                log.info("using base_url: %s", self.base_url)
+            self._client = OpenAI(**client_kwargs)
 
         kwargs: dict = {
             "model": self.model,
@@ -67,7 +73,15 @@ class Transcriber:
                     file=audio_file, **kwargs
                 )
         except Exception as exc:
-            raise TranscriptionError(str(exc)) from exc
+            # Surface the most useful bit of the provider's error instead
+            # of dumping the full JSON response into every log line.
+            msg = str(exc)
+            body = getattr(exc, "body", None)
+            if isinstance(body, dict):
+                err = body.get("error")
+                if isinstance(err, dict) and err.get("message"):
+                    msg = err["message"]
+            raise TranscriptionError(msg) from exc
 
         # response_format=text returns a plain string
         if isinstance(resp, str):

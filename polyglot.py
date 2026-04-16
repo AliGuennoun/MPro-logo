@@ -60,6 +60,7 @@ class PolyglotApp:
             api_key=config.api_key,
             model=config.model,
             language=None if config.language == "auto" else config.language,
+            base_url=config.base_url or None,
         )
         self.typer = TextTyper(method=config.typing_method)
         self.state = self.STATE_IDLE

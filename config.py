@@ -23,9 +23,10 @@ DEFAULT_CONFIG_PATH = DEFAULT_CONFIG_DIR / "config.json"
 class Config:
     # --- transcription ---
     provider: str = "openai"            # "openai" or "local"
-    model: str = "whisper-1"            # whisper-1 (API) or tiny/base/small/medium/large-v3 (local)
+    model: str = "whisper-1"            # whisper-1 (OpenAI), whisper-large-v3-turbo (Groq), tiny/base/small/medium/large-v3 (local)
     language: str = "auto"              # ISO-639-1 code (e.g. "en") or "auto"
     api_key: str = ""                   # set via env var OPENAI_API_KEY preferred
+    base_url: str = ""                  # override for any OpenAI-compatible endpoint (Groq, OpenRouter, DeepInfra, self-hosted, ...)
 
     # --- audio capture ---
     sample_rate: int = 16000
@@ -53,7 +54,7 @@ class Config:
 
 
 def _apply_env(cfg: Config) -> None:
-    env_key = os.environ.get("OPENAI_API_KEY")
+    env_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("POLYGLOT_API_KEY")
     if env_key:
         cfg.api_key = env_key
     env_lang = os.environ.get("POLYGLOT_LANGUAGE")
@@ -65,6 +66,12 @@ def _apply_env(cfg: Config) -> None:
     env_provider = os.environ.get("POLYGLOT_PROVIDER")
     if env_provider:
         cfg.provider = env_provider
+    env_base = os.environ.get("POLYGLOT_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
+    if env_base:
+        cfg.base_url = env_base
+    env_model = os.environ.get("POLYGLOT_MODEL")
+    if env_model:
+        cfg.model = env_model
 
 
 def load_config(path: Optional[str] = None) -> Config:
