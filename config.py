@@ -28,6 +28,12 @@ class Config:
     api_key: str = ""                   # set via env var OPENAI_API_KEY preferred
     base_url: str = ""                  # override for any OpenAI-compatible endpoint (Groq, OpenRouter, DeepInfra, self-hosted, ...)
 
+    # --- post-processing (LLM) ---
+    mode: str = "dictate"               # "dictate" | "translate" | "cleanup" | "both"
+    target_language: str = "English"    # Used when mode == "translate" or "both"
+    llm_model: str = "llama-3.3-70b-versatile"  # Groq default; override to any chat model
+    custom_prompt: str = ""             # If set, overrides built-in translate/cleanup prompts
+
     # --- audio capture ---
     sample_rate: int = 16000
     silence_threshold: float = 0.012    # RMS threshold (0..1) for silence detection
@@ -36,6 +42,11 @@ class Config:
     # --- output ---
     typing_method: str = "paste"        # "paste" (recommended) or "keystrokes"
     add_trailing_space: bool = True     # append a space after each dictation
+    auto_type: bool = True              # False = show in GUI only, don't type into focused app
+
+    # --- UI ---
+    show_gui: bool = True               # Launch the desktop GUI window
+    theme: str = "dark"                 # "dark", "light", or "system"
 
     # --- hotkey ---
     # pynput GlobalHotKeys syntax. Default is Ctrl+Alt+Space which rarely conflicts.

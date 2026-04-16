@@ -30,12 +30,18 @@ whatever Whisper hears.
 
 - **Works in every app** — paste-based insertion reaches any text field.
 - **Every language Whisper knows** — auto-detects or force a specific one.
-- **Global hotkey** toggles recording (default `Ctrl + Alt + Space`).
+- **Modern GUI** with live status, transcript history, and in-app settings.
+- **Live translation** — speak in any language, have the translation typed
+  into your app in real time (powered by an LLM; Groq or OpenAI).
+- **Clean-up mode** — auto-remove filler words ("um", "uh", "you know") and
+  fix punctuation/grammar without changing meaning.
+- **Global hotkey** toggles recording (default `Ctrl + Alt + Space`) — works
+  even when the Polyglot window isn't focused.
 - **Voice-activity auto-stop** — stop speaking and it finishes on its own.
-- **Two transcription backends** — OpenAI API (fast, no GPU) or fully
-  offline `openai-whisper` (privacy-first; CPU or GPU).
+- **Multiple providers** — OpenAI, Groq (free tier, no CC), OpenRouter,
+  DeepInfra, self-hosted vLLM — anything OpenAI-compatible via `base_url`.
+- **Fully offline option** — run `openai-whisper` locally (privacy-first).
 - **System-tray icon** shows idle / recording / transcribing state.
-- **Zero-cost hotkey**: rich configurability via a single JSON file.
 - **Cross-platform** — macOS, Linux (X11/Wayland), Windows 10+.
 
 ## Install
@@ -85,7 +91,9 @@ Polyglot needs permission to listen to the mic *and* to post keystrokes.
 
 ## Configure
 
-On first run, Polyglot writes `~/.polyglot/config.json`:
+Most people never need to edit config files — just open **Settings** from
+the GUI. But for power users, on first run Polyglot writes
+`~/.polyglot/config.json`:
 
 ```json
 {
@@ -93,11 +101,18 @@ On first run, Polyglot writes `~/.polyglot/config.json`:
   "model": "whisper-1",
   "language": "auto",
   "api_key": "",
+  "base_url": "",
+  "mode": "dictate",
+  "target_language": "English",
+  "llm_model": "llama-3.3-70b-versatile",
   "sample_rate": 16000,
   "silence_threshold": 0.012,
   "silence_duration": 1.5,
   "typing_method": "paste",
   "add_trailing_space": true,
+  "auto_type": true,
+  "show_gui": true,
+  "theme": "dark",
   "hotkey": "<ctrl>+<alt>+<space>"
 }
 ```
@@ -105,12 +120,31 @@ On first run, Polyglot writes `~/.polyglot/config.json`:
 | Key                 | Notes                                                             |
 | ------------------- | ----------------------------------------------------------------- |
 | `provider`          | `openai` (API) or `local` (offline, needs `openai-whisper`)       |
-| `model`             | `whisper-1` for API; `base`/`small`/`medium`/`large-v3` locally   |
+| `model`             | `whisper-1` for OpenAI; `whisper-large-v3-turbo` for Groq; `base`/`small`/`medium`/`large-v3` locally |
 | `language`          | ISO-639-1 (`en`, `fr`, `zh`, …) or `auto`                         |
+| `base_url`          | Point at any OpenAI-compatible endpoint (Groq, OpenRouter, self-hosted, …) |
+| `mode`              | `dictate` \| `translate` \| `cleanup` \| `both`                   |
+| `target_language`   | Used in `translate` / `both` — any language name (`French`, `Japanese`, …) |
+| `llm_model`         | Chat model for post-processing (translation / cleanup)            |
+| `auto_type`         | `false` = show in GUI only, don't type into the focused app       |
+| `show_gui`          | `false` = headless (equivalent to `--no-gui`)                     |
 | `hotkey`            | pynput syntax — `<ctrl>+<alt>+<space>`, `<cmd>+<shift>+d`, etc.  |
 | `typing_method`     | `paste` (reliable Unicode) or `keystrokes`                        |
 | `silence_duration`  | Seconds of silence before auto-stop. Set to `0` to disable.       |
 | `silence_threshold` | RMS threshold (0..1). Raise if your mic is noisy.                 |
+
+### Using Groq (free, no credit card)
+
+Groq hosts Whisper-large-v3 and Llama-3.3-70B on a free tier — ideal if
+you don't want an OpenAI billing account:
+
+```bash
+export OPENAI_API_KEY=gsk_...                              # Groq key
+export POLYGLOT_BASE_URL=https://api.groq.com/openai/v1
+export POLYGLOT_MODEL=whisper-large-v3-turbo
+```
+
+Or paste the key + base URL into **Settings → Provider** in the GUI.
 
 Set your API key via environment variable (recommended) so it never
 touches the config file:
@@ -132,12 +166,24 @@ Env overrides: `POLYGLOT_LANGUAGE`, `POLYGLOT_HOTKEY`, `POLYGLOT_PROVIDER`.
 Useful CLI flags:
 
 ```bash
-polyglot --language es              # Force Spanish for this session
-polyglot --hotkey "<cmd>+<shift>+d" # Rebind hotkey on the fly
-polyglot --list-devices             # Show input devices
-polyglot --no-tray                  # Skip the tray icon
-polyglot -v                         # Verbose logs
+polyglot --language es                      # Force Spanish for this session
+polyglot --mode translate --target-language French
+polyglot --mode cleanup                     # Strip filler words / fix grammar
+polyglot --hotkey "<cmd>+<shift>+d"         # Rebind hotkey on the fly
+polyglot --no-gui                           # Headless / tray-only
+polyglot --no-tray                          # Skip the tray icon
+polyglot --list-devices                     # Show input devices
+polyglot -v                                 # Verbose logs
 ```
+
+### Modes explained
+
+| Mode       | What happens                                                     |
+| ---------- | ---------------------------------------------------------------- |
+| `dictate`  | Speak → transcribe → type. No LLM calls.                         |
+| `translate`| Speak in any language → LLM translates → translation is typed.   |
+| `cleanup`  | Speak → LLM removes "um"/"uh", fixes grammar → cleaned text typed. |
+| `both`     | Same as `translate`, plus the original is kept in the GUI history. |
 
 ## Offline mode
 
@@ -166,8 +212,10 @@ pyinstaller --noconfirm --onefile --windowed \
 
 ```
 polyglot.py        # Entry point (hotkey + orchestration)
+gui.py             # Modern CustomTkinter window + settings dialog
 recorder.py        # Mic capture + voice-activity auto-stop
-transcriber.py     # OpenAI Whisper API + local whisper backends
+transcriber.py     # OpenAI-compatible Whisper + local whisper backends
+postprocess.py     # LLM translate / cleanup via chat completions
 typer.py           # Clipboard-paste / keystroke text insertion
 tray.py            # Optional system-tray icon
 config.py          # JSON config + env var overrides

@@ -5,6 +5,10 @@ pynput>=1.7.6
 pyperclip>=1.8.2
 openai>=1.30.0
 
+# Modern desktop GUI (recommended — launched by default).
+# Polyglot still runs in headless mode with --no-gui if this isn't installed.
+customtkinter>=5.2.0
+
 # Optional: system-tray icon (nice-to-have; polyglot runs without these)
 pystray>=0.19.5
 pillow>=10.0
