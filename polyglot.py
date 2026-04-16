@@ -53,6 +53,7 @@ class PolyglotApp:
             channels=1,
             silence_threshold=config.silence_threshold,
             silence_duration=config.silence_duration,
+            on_auto_stop=self._handle_auto_stop,
         )
         self.transcriber = Transcriber(
             provider=config.provider,
@@ -90,6 +91,11 @@ class PolyglotApp:
         else:
             self._stop_and_transcribe()
 
+    def _handle_auto_stop(self) -> None:
+        """Called from the recorder thread when the VAD detects end of speech."""
+        log.debug("auto-stop signal received")
+        self._stop_and_transcribe()
+
     def push_to_talk_press(self) -> None:
         if self.is_busy() or self.state == self.STATE_RECORDING:
             return
@@ -110,6 +116,20 @@ class PolyglotApp:
             self._set_state(self.STATE_IDLE)
 
     def _stop_and_transcribe(self) -> None:
+        # Claim exclusive ownership of the state transition so that an
+        # auto-stop firing at the same instant as a hotkey press can't run
+        # this pipeline twice.
+        with self._lock:
+            if self.state != self.STATE_RECORDING:
+                log.debug("ignoring stop: state=%s", self.state)
+                return
+            self.state = self.STATE_TRANSCRIBING
+        if self.tray is not None:
+            try:
+                self.tray.set_state(self.STATE_TRANSCRIBING)  # type: ignore[attr-defined]
+            except Exception:
+                pass
+
         try:
             audio_path = self.recorder.stop_and_save()
         except Exception as exc:
@@ -119,10 +139,10 @@ class PolyglotApp:
 
         if audio_path is None:
             log.info("no audio captured")
+            self._notify("No speech detected")
             self._set_state(self.STATE_IDLE)
             return
 
-        self._set_state(self.STATE_TRANSCRIBING)
         threading.Thread(
             target=self._run_transcription, args=(audio_path,), daemon=True
         ).start()

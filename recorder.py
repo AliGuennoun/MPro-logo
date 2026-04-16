@@ -12,7 +12,7 @@ import queue
 import tempfile
 import threading
 import wave
-from typing import Optional
+from typing import Callable, Optional
 
 log = logging.getLogger("polyglot.recorder")
 
@@ -24,11 +24,13 @@ class Recorder:
         channels: int = 1,
         silence_threshold: float = 0.012,
         silence_duration: float = 1.5,
+        on_auto_stop: Optional[Callable[[], None]] = None,
     ) -> None:
         self.sample_rate = sample_rate
         self.channels = channels
         self.silence_threshold = silence_threshold
         self.silence_duration = silence_duration
+        self.on_auto_stop = on_auto_stop
         self._stream = None
         self._thread: Optional[threading.Thread] = None
         self._queue: "queue.Queue" = queue.Queue()
@@ -151,7 +153,20 @@ class Recorder:
                     if silent_seconds >= self.silence_duration:
                         log.info("auto-stop: %.2fs of silence", silent_seconds)
                         self._stop_event.set()
+                        if self.on_auto_stop is not None:
+                            # Fire on a side-thread so we don't deadlock
+                            # when the callback turns around and joins us.
+                            threading.Thread(
+                                target=self._fire_auto_stop, daemon=True
+                            ).start()
                         break
+
+    def _fire_auto_stop(self) -> None:
+        try:
+            if self.on_auto_stop is not None:
+                self.on_auto_stop()
+        except Exception as exc:  # pragma: no cover - callback is user code
+            log.error("on_auto_stop callback raised: %s", exc)
 
     def _write_wav(self) -> str:
         fd, path = tempfile.mkstemp(prefix="polyglot-", suffix=".wav")
