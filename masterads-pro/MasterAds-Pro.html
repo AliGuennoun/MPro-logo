@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MasterAds Pro — Cockpit</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --surface:#ffffff; --border:#e3e6ea; --ink:#1a2330; --ink2:#5b6572; --ink3:#8a93a0;
+    --accent:#1f5eff; --accent-soft:#eaf0ff;
+    --good:#0e7a3d; --good-bg:#e7f5ec; --warn:#8a6100; --warn-bg:#fdf3d7; --bad:#b3261e; --bad-bg:#fbe9e7; --info:#155e75; --info-bg:#e0f2f7;
+    --radius:10px; --shadow:0 1px 3px rgba(20,30,50,.08);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:var(--ink); font-size:14px; line-height:1.5;}
+  #app{display:flex; min-height:100vh;}
+  /* Sidebar */
+  #sidebar{width:210px; background:#111827; color:#d3d9e2; padding:18px 12px; flex-shrink:0; display:flex; flex-direction:column;}
+  #sidebar .brand{font-weight:800; font-size:16px; color:#fff; padding:6px 10px 18px; letter-spacing:.3px;}
+  #sidebar .brand span{color:#7aa2ff;}
+  #sidebar button.nav{display:block; width:100%; text-align:left; background:none; border:none; color:#c4cbd6; padding:10px 12px; border-radius:8px; font-size:14px; cursor:pointer; margin-bottom:2px;}
+  #sidebar button.nav:hover{background:#1d2735; color:#fff;}
+  #sidebar button.nav.active{background:#24334a; color:#fff; font-weight:600;}
+  #sidebar .foot{margin-top:auto; font-size:11px; color:#6a7688; padding:10px 12px;}
+  /* Main */
+  #main{flex:1; padding:26px 32px; max-width:1160px;}
+  h1{font-size:20px; margin-bottom:4px;}
+  .sub{color:var(--ink2); margin-bottom:20px;}
+  h2{font-size:15px; margin:22px 0 10px;}
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px 18px; margin-bottom:16px;}
+  .row{display:flex; gap:14px; flex-wrap:wrap;}
+  .tile{flex:1; min-width:150px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow);}
+  .tile .k{font-size:12px; color:var(--ink2); margin-bottom:2px;}
+  .tile .v{font-size:22px; font-weight:700;}
+  .tile .s{font-size:12px; color:var(--ink3);}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{text-align:left; color:var(--ink2); font-weight:600; padding:7px 8px; border-bottom:2px solid var(--border); white-space:nowrap;}
+  td{padding:7px 8px; border-bottom:1px solid var(--border); vertical-align:top;}
+  td.num, th.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  tr.total td{font-weight:700; border-top:2px solid var(--border);}
+  .badge{display:inline-block; padding:2px 9px; border-radius:20px; font-size:11.5px; font-weight:700; white-space:nowrap;}
+  .b-scale{background:var(--good-bg); color:var(--good);}
+  .b-keep{background:var(--info-bg); color:var(--info);}
+  .b-watch{background:var(--warn-bg); color:var(--warn);}
+  .b-kill{background:var(--bad-bg); color:var(--bad);}
+  .b-na{background:#eef0f3; color:var(--ink2);}
+  .b-hot{background:var(--bad-bg); color:var(--bad);}
+  .b-warm{background:var(--warn-bg); color:var(--warn);}
+  .b-cold{background:var(--info-bg); color:var(--info);}
+  .tag{display:inline-block; background:#eef0f3; color:var(--ink2); border-radius:6px; padding:1px 7px; font-size:11px; margin-right:4px;}
+  button.btn{background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer;}
+  button.btn:hover{filter:brightness(1.08);}
+  button.btn2{background:var(--surface); color:var(--ink); border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer;}
+  button.btn2:hover{background:#f0f2f5;}
+  button.btn-sm{padding:3px 8px; font-size:12px;}
+  button.danger{color:var(--bad); border-color:#f0c9c5;}
+  input[type=text],input[type=number],input[type=email],input[type=date],input[type=password],select,textarea{
+    width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:#fff; color:var(--ink); font-family:inherit;}
+  textarea{min-height:70px; resize:vertical;}
+  label{display:block; font-size:12px; font-weight:600; color:var(--ink2); margin:10px 0 4px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:0 16px;}
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 16px;}
+  .muted{color:var(--ink3); font-size:12.5px;}
+  .empty{padding:30px; text-align:center; color:var(--ink3);}
+  .toolbar{display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+  .toolbar .spacer{flex:1;}
+  /* Kanban */
+  .kanban{display:flex; gap:10px; overflow-x:auto; padding-bottom:8px;}
+  .kcol{background:#eef0f3; border-radius:var(--radius); padding:10px; min-width:200px; width:200px; flex-shrink:0;}
+  .kcol h3{font-size:12.5px; color:var(--ink2); margin-bottom:8px; text-transform:uppercase; letter-spacing:.4px;}
+  .kcard{background:#fff; border:1px solid var(--border); border-radius:8px; padding:9px 10px; margin-bottom:8px; cursor:pointer; box-shadow:var(--shadow);}
+  .kcard .nm{font-weight:600; font-size:13px;}
+  .kcard .mv{display:flex; gap:4px; margin-top:6px;}
+  /* Modal */
+  #modalWrap{position:fixed; inset:0; background:rgba(15,20,30,.45); display:none; align-items:flex-start; justify-content:center; z-index:50; overflow:auto; padding:40px 16px;}
+  #modalWrap.open{display:flex;}
+  #modal{background:#fff; border-radius:12px; padding:22px 24px; width:640px; max-width:100%; box-shadow:0 10px 40px rgba(0,0,0,.25);}
+  #modal h2{margin-top:0;}
+  .modal-actions{display:flex; gap:8px; justify-content:flex-end; margin-top:18px;}
+  /* Toast */
+  #toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1a2330; color:#fff; padding:10px 18px; border-radius:8px; font-size:13px; display:none; z-index:99; max-width:80%;}
+  /* AI output */
+  .ai-out{background:#fafbfc; border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-top:10px; font-size:13.5px;}
+  .ai-out h3{font-size:14px; margin:12px 0 6px;} .ai-out h3:first-child{margin-top:0;}
+  .ai-out h4{font-size:13px; margin:10px 0 4px;}
+  .ai-out ul{margin:4px 0 8px 18px;}
+  .ai-out p{margin:6px 0;}
+  .spin{display:inline-block; width:14px; height:14px; border:2px solid #cdd4dd; border-top-color:var(--accent); border-radius:50%; animation:sp 0.8s linear infinite; vertical-align:-2px;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  details.play{margin-bottom:10px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px;}
+  details.play summary{font-weight:700; cursor:pointer; font-size:13.5px;}
+  details.play .bd{margin-top:8px; font-size:13px; color:var(--ink2);}
+  details.play .bd b{color:var(--ink);}
+  /* Report */
+  #reportView{display:none; position:fixed; inset:0; background:#fff; z-index:60; overflow:auto; padding:36px 48px;}
+  #reportView.open{display:block;}
+  #reportView .rep-head{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid var(--ink); padding-bottom:14px; margin-bottom:20px;}
+  #reportView .rep-brand{font-size:22px; font-weight:800;}
+  #reportView h2{font-size:16px; margin:20px 0 8px;}
+  .noprint{}
+  @media print{
+    body>#app, #modalWrap, #toast{display:none !important;}
+    #reportView{position:static; padding:0;}
+    .noprint{display:none !important;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <div class="brand">MasterAds <span>Pro</span></div>
+    <button class="nav" data-view="dashboard">📊 Dashboard</button>
+    <button class="nav" data-view="clients">👥 Clients</button>
+    <button class="nav" data-view="ads">📈 Ads Analysis</button>
+    <button class="nav" data-view="crm">🗂 CRM Pipeline</button>
+    <button class="nav" data-view="strategy">🧭 Strategy</button>
+    <button class="nav" data-view="prospection">🎯 Prospection</button>
+    <button class="nav" data-view="settings">⚙️ Settings</button>
+    <div class="foot">Your data stays in this browser.<br>Back it up in Settings.</div>
+  </div>
+  <div id="main"></div>
+</div>
+<div id="modalWrap"><div id="modal"></div></div>
+<div id="reportView"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ============================= STATE ============================= */
+const LS_KEY = 'masterads_pro_v1';
+const STAGES = ['New','Contacted','Qualified','Proposal','Won','Lost'];
+const PSTAGES = ['To contact','Contacted','In discussion','Proposal sent','Won','Lost'];
+const defaultState = () => ({
+  settings:{ businessName:'MasterAds Pro', ownerName:'', email:'', phone:'', apiKey:'', model:'claude-opus-4-8' },
+  clients:[], campaigns:[], leads:[], prospects:[], strategies:{}, aiAds:{}
+});
+let state = load();
+function load(){ try{ const raw = localStorage.getItem(LS_KEY); if(raw){ const s = JSON.parse(raw); return Object.assign(defaultState(), s); } }catch(e){} return defaultState(); }
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+/* ============================= UTILS ============================= */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg, ms=2600){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none', ms); }
+function clientById(id){ return state.clients.find(c=>c.id===id); }
+function clientName(id){ const c=clientById(id); return c?c.name:'—'; }
+
+function parseNum(v){
+  if(v==null) return NaN;
+  if(typeof v==='number') return v;
+  let s = String(v).trim().replace(/[€$£]|MAD|DH|USD|EUR/gi,'').replace(/[\s  ']/g,'');
+  if(!s || s==='--' || s==='—') return NaN;
+  const hasC = s.includes(','), hasD = s.includes('.');
+  if(hasC && hasD){
+    // last separator is the decimal one
+    if(s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g,'').replace(',', '.');
+    else s = s.replace(/,/g,'');
+  } else if(hasC){
+    const after = s.split(',').pop();
+    if(after.length===3) s = s.replace(/,/g,'');   // "8,000" → 8000 (thousands)
+    else s = s.replace(',', '.');                   // "53,33" → 53.33 (decimal)
+  }
+  const n = parseFloat(s);
+  return isNaN(n)?NaN:n;
+}
+function fmtNum(v, dec=0){
+  if(v==null || !isFinite(v)) return '—';
+  const n = v.toFixed(dec); let [i,d] = n.split('.');
+  const neg = i.startsWith('-'); if(neg) i=i.slice(1);
+  i = i.replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  return (neg?'-':'')+i+(d?','+d:'');
+}
+function fmtMoney(v, cur){
+  if(v==null || !isFinite(v)) return '—';
+  const dec = Math.abs(v % 1) > 0.004 ? 2 : 0;
+  if(cur==='USD'){
+    const n=v.toFixed(dec); let[i,d]=n.split('.'); const neg=i.startsWith('-'); if(neg)i=i.slice(1);
+    i=i.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    return (neg?'-':'')+'$'+i+(d?'.'+d:'');
+  }
+  return fmtNum(v,dec)+' '+(cur==='EUR'?'€':(cur||'MAD'));
+}
+function fmtPct(v, dec=1){ return (v==null||!isFinite(v))?'—':fmtNum(v,dec)+'%'; }
+
+/* ============================= CSV ============================= */
+function parseCSV(text){
+  const rows=[]; let row=[], field='', inQ=false;
+  text = String(text).replace(/^﻿/,'');
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else inQ=false; }
+      else field+=c;
+    } else {
+      if(c==='"') inQ=true;
+      else if(c===','){ row.push(field); field=''; }
+      else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else if(c==='\r'){ /* skip */ }
+      else field+=c;
+    }
+  }
+  if(field!=='' || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r=>r.some(c=>String(c).trim()!==''));
+}
+const ADS_HEADER_TOKENS = ['campaign','amount spent','impressions','impr','clicks','results','conversions','cost','spend'];
+function findHeaderRow(rows){
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    const cells = rows[i].map(c=>String(c).toLowerCase().trim());
+    if(cells.length<2) continue;
+    const hits = cells.filter(c=>ADS_HEADER_TOKENS.some(t=>c.includes(t))).length;
+    if(hits>=2) return i;
+  }
+  return -1;
+}
+function detectPlatform(headers){
+  const h = headers.map(x=>String(x).toLowerCase());
+  if(h.some(x=>x.includes('amount spent') || x.includes('link clicks') || x.includes('reach'))) return 'meta';
+  if(h.some(x=>x==='impr.' || x==='impr') || (h.includes('cost') && h.includes('campaign'))) return 'google';
+  return 'other';
+}
+function autoMap(headers){
+  const h = headers.map(x=>String(x).toLowerCase().trim());
+  const find = (...preds) => { for(const p of preds){ const i = h.findIndex(p); if(i>=0) return i; } return -1; };
+  return {
+    name: find(x=>x==='campaign name', x=>x==='campaign', x=>x.includes('campaign name'), x=>x.includes('campaign')),
+    spend: find(x=>x.startsWith('amount spent'), x=>x==='cost', x=>x==='spend', x=>x.includes('spent'), x=>x.includes('cost')),
+    impressions: find(x=>x==='impressions', x=>x==='impr.', x=>x==='impr', x=>x.includes('impression')),
+    clicks: find(x=>x==='link clicks', x=>x==='clicks', x=>x.includes('link click'), x=>x==='clicks (all)', x=>x.includes('click')),
+    results: find(x=>x==='results', x=>x==='conversions', x=>x==='leads', x=>x.includes('result'), x=>x.includes('conversion')),
+    revenue: find(x=>x.includes('purchase value')||x.includes('conversion value')||x==='conv. value'||x.includes('revenue'))
+  };
+}
+const LEAD_HEADER_MAP = {
+  name:['full_name','full name','name','nom','lead name'],
+  phone:['phone_number','phone','téléphone','telephone','tel','whatsapp'],
+  email:['email','e-mail','mail','adresse email'],
+  source:['campaign_name','campaign','source','form_name','ad_name','origine'],
+  date:['created_time','created','date','submitted']
+};
+function autoMapLeads(headers){
+  const h = headers.map(x=>String(x).toLowerCase().trim());
+  const out={};
+  for(const [k, aliases] of Object.entries(LEAD_HEADER_MAP)){
+    out[k] = h.findIndex(x=>aliases.some(a=>x===a || x.includes(a)));
+  }
+  return out;
+}
+
+/* ============================= METRICS & VERDICTS ============================= */
+function metrics(c){
+  const spend=+c.spend||0, imp=+c.impressions||0, clk=+c.clicks||0, res=+c.results||0, rev=+c.revenue||0;
+  return {
+    spend, impressions:imp, clicks:clk, results:res, revenue:rev,
+    cpm: imp>0 ? spend/imp*1000 : NaN,
+    ctr: imp>0 ? clk/imp*100 : NaN,
+    cpc: clk>0 ? spend/clk : NaN,
+    cpl: res>0 ? spend/res : NaN,
+    roas: (rev>0 && spend>0) ? rev/spend : NaN
+  };
+}
+function verdictFor(c, target){
+  const m = metrics(c);
+  if(!target || !isFinite(target) || target<=0) return {code:'na', label:'SET TARGET', reason:'Set a target CPA/CPL on the client to get verdicts.'};
+  if(m.results===0){
+    if(m.spend >= 2*target) return {code:'kill', label:'KILL', reason:'No results with spend over 2× your target — stop or rebuild this campaign.'};
+    return {code:'watch', label:'WATCH', reason:'No results yet, but spend is still below 2× target. Give it a little more data.'};
+  }
+  const r = m.cpl/target;
+  if(r <= 0.8) return {code:'scale', label:'SCALE', reason:`CPL ${Math.round(r*100)}% of target — increase budget gradually (+20-30% steps).`};
+  if(r <= 1.1) return {code:'keep', label:'KEEP', reason:'CPL around target — keep running, test creatives to push it down.'};
+  if(r <= 1.5) return {code:'watch', label:'WATCH', reason:'CPL above target — refresh creatives / tighten audience before scaling anything.'};
+  return {code:'kill', label:'KILL', reason:`CPL ${Math.round(r*100)}% of target — cut it or rebuild with a new angle.`};
+}
+function diagnostics(c){
+  const m = metrics(c), hints=[];
+  if(isFinite(m.ctr) && m.ctr < 1) hints.push('Low CTR (<1%) → creative/hook problem more than targeting.');
+  if(isFinite(m.ctr) && m.ctr >= 3 && isFinite(m.cpl)) hints.push('Strong CTR — if CPL is high, the leak is after the click (landing page / form / offer).');
+  if(m.results===0 && m.clicks>50) hints.push('Clicks but zero results → check pixel/conversion tracking and the landing page.');
+  return hints;
+}
+function scoreLead(l){
+  let s=0;
+  if(l.phone) s+=35;
+  if(l.email) s+=20;
+  if(l.notes && l.notes.trim().length>10) s+=15;
+  if(l.source) s+=10;
+  const ageDays = (Date.now() - new Date(l.createdAt||Date.now()).getTime())/86400000;
+  if(ageDays<=2) s+=20; else if(ageDays<=7) s+=10;
+  return Math.min(100,s);
+}
+function leadHeat(score){ return score>=70?{cls:'b-hot',label:'HOT'}:score>=40?{cls:'b-warm',label:'WARM'}:{cls:'b-cold',label:'COLD'}; }
+
+/* ============================= MARKDOWN-ISH RENDER ============================= */
+function mdToHtml(md){
+  const lines = String(md||'').split('\n'); let html='', inList=false;
+  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|\s)\*([^*]+)\*/g,'$1<i>$2</i>');
+  for(const raw of lines){
+    const line = raw.trimEnd();
+    if(/^\s*[-*•] /.test(line)){ if(!inList){html+='<ul>';inList=true;} html+='<li>'+inline(line.replace(/^\s*[-*•] /,''))+'</li>'; continue; }
+    if(inList){ html+='</ul>'; inList=false; }
+    if(/^#{3,}\s/.test(line)) html+='<h4>'+inline(line.replace(/^#+\s/,''))+'</h4>';
+    else if(/^##\s/.test(line)) html+='<h3>'+inline(line.replace(/^#+\s/,''))+'</h3>';
+    else if(/^#\s/.test(line)) html+='<h3>'+inline(line.replace(/^#+\s/,''))+'</h3>';
+    else if(line==='') html+='';
+    else html+='<p>'+inline(line)+'</p>';
+  }
+  if(inList) html+='</ul>';
+  return html;
+}
+
+/* ============================= CLAUDE API ============================= */
+async function aiCall(system, user, maxTokens=4000){
+  const key = state.settings.apiKey;
+  if(!key) throw new Error('NO_KEY');
+  const resp = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'x-api-key':key,
+      'anthropic-version':'2023-06-01',
+      'content-type':'application/json',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({ model: state.settings.model||'claude-opus-4-8', max_tokens:maxTokens, system, messages:[{role:'user',content:user}] })
+  });
+  if(!resp.ok){
+    let msg = 'API error '+resp.status;
+    try{ const j=await resp.json(); if(j.error&&j.error.message) msg=j.error.message; }catch(e){}
+    if(resp.status===401) msg='Invalid API key — check Settings.';
+    throw new Error(msg);
+  }
+  const data = await resp.json();
+  if(data.stop_reason==='refusal') throw new Error('The AI declined this request.');
+  return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+}
+function aiGuard(){ if(!state.settings.apiKey){ toast('Add your Anthropic API key in Settings to unlock AI features.'); route('settings'); return false; } return true; }
+function bizContext(){
+  const s=state.settings;
+  return `You are the senior strategist of "${s.businessName||'MasterAds Pro'}", a digital marketing & media buying agency${s.ownerName?(' run by '+s.ownerName):''} working with Moroccan and international clients (currencies: MAD, EUR, USD). Be concrete, practical and concise. Use plain markdown (## headers, bullet lists, **bold**). No preamble.`;
+}
+
+/* ============================= ROUTING ============================= */
+let currentView='dashboard';
+function route(v){
+  currentView=v;
+  document.querySelectorAll('#sidebar .nav').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  const main=document.getElementById('main');
+  const R={dashboard:renderDashboard, clients:renderClients, ads:renderAds, crm:renderCRM, strategy:renderStrategy, prospection:renderProspection, settings:renderSettings};
+  main.innerHTML=''; (R[v]||renderDashboard)(main);
+}
+document.querySelectorAll('#sidebar .nav').forEach(b=>b.addEventListener('click',()=>route(b.dataset.view)));
+
+/* ============================= MODAL ============================= */
+function openModal(html){ document.getElementById('modal').innerHTML=html; document.getElementById('modalWrap').classList.add('open'); }
+function closeModal(){ document.getElementById('modalWrap').classList.remove('open'); }
+document.getElementById('modalWrap').addEventListener('click', e=>{ if(e.target.id==='modalWrap') closeModal(); });
+
+/* ============================= DASHBOARD ============================= */
+function renderDashboard(el){
+  const now=Date.now(), d30=now-30*86400000, d7=now-7*86400000;
+  const spendByCur={};
+  state.campaigns.forEach(c=>{ const cl=clientById(c.clientId); const cur=cl?cl.currency:'MAD'; spendByCur[cur]=(spendByCur[cur]||0)+(+c.spend||0); });
+  const leads7 = state.leads.filter(l=>new Date(l.createdAt).getTime()>=d7).length;
+  const followupsDue = state.leads.filter(l=>l.nextFollowUp && l.nextFollowUp<=todayISO() && !['Won','Lost'].includes(l.stage));
+  const prospActions = state.prospects.filter(p=>p.nextActionDate && p.nextActionDate<=todayISO() && !['Won','Lost'].includes(p.status));
+  const openLeads = state.leads.filter(l=>!['Won','Lost'].includes(l.stage)).length;
+  const spendStr = Object.keys(spendByCur).length? Object.entries(spendByCur).map(([c,v])=>fmtMoney(v,c)).join(' + ') : '—';
+  el.innerHTML = `
+    <h1>Dashboard</h1><div class="sub">Your day at a glance.</div>
+    <div class="row">
+      <div class="tile"><div class="k">Active clients</div><div class="v" id="kpiClients">${state.clients.length}</div></div>
+      <div class="tile"><div class="k">Tracked ad spend</div><div class="v" id="kpiSpend" style="font-size:17px">${esc(spendStr)}</div><div class="s">${state.campaigns.length} campaigns imported</div></div>
+      <div class="tile"><div class="k">New leads (7 days)</div><div class="v" id="kpiLeads">${leads7}</div><div class="s">${openLeads} open in pipeline</div></div>
+      <div class="tile"><div class="k">Follow-ups due</div><div class="v" id="kpiDue">${followupsDue.length}</div><div class="s">${prospActions.length} prospection actions due</div></div>
+    </div>
+    <h2>⏰ Follow-ups due today</h2>
+    <div class="card" id="dueList">${ followupsDue.length? '<table><thead><tr><th>Lead</th><th>Client</th><th>Stage</th><th>Phone</th><th>Due</th><th></th></tr></thead><tbody>'+
+      followupsDue.map(l=>`<tr><td><b>${esc(l.name)}</b></td><td>${esc(clientName(l.clientId))}</td><td>${esc(l.stage)}</td><td>${esc(l.phone||'—')}</td><td>${esc(l.nextFollowUp)}</td>
+      <td><button class="btn2 btn-sm" onclick="openLead('${l.id}')">Open</button></td></tr>`).join('')+'</tbody></table>' : '<div class="empty">Nothing due. 🎉</div>'}</div>
+    <h2>🎯 Prospection actions due</h2>
+    <div class="card">${ prospActions.length? '<table><thead><tr><th>Prospect</th><th>Channel</th><th>Next action</th><th>Due</th><th></th></tr></thead><tbody>'+
+      prospActions.map(p=>`<tr><td><b>${esc(p.name)}</b> ${p.company?('<span class="tag">'+esc(p.company)+'</span>'):''}</td><td>${esc(p.channel)}</td><td>${esc(p.nextAction||'—')}</td><td>${esc(p.nextActionDate)}</td>
+      <td><button class="btn2 btn-sm" onclick="openProspect('${p.id}')">Open</button></td></tr>`).join('')+'</tbody></table>' : '<div class="empty">No prospection actions due.</div>'}</div>
+    ${state.clients.length===0? `<div class="card" style="text-align:center"><p style="margin-bottom:10px">👋 New here? Load realistic sample data to explore, then wipe it in Settings.</p><button class="btn" id="btnDemo" onclick="loadDemo()">Load sample data</button></div>`:''}
+  `;
+}
+function loadDemo(){
+  const cid=uid();
+  state.clients.push({id:cid, name:'Riad Atlas', company:'Riad Atlas Marrakech', email:'contact@riadatlas.ma', phone:'+212 6 00 00 00 00', currency:'MAD', targetCPL:50, notes:'Boutique riad — goal: direct bookings.', createdAt:new Date().toISOString()});
+  state.campaigns.push(
+    {id:uid(), clientId:cid, platform:'meta', name:'Leads - Riad Booking - Adv+', spend:1500, impressions:120000, clicks:2400, results:40, revenue:0, period:'Last 30 days', importedAt:new Date().toISOString()},
+    {id:uid(), clientId:cid, platform:'google', name:'Search - Brand', spend:400, impressions:8000, clicks:640, results:10, revenue:0, period:'Last 30 days', importedAt:new Date().toISOString()}
+  );
+  state.leads.push({id:uid(), clientId:cid, name:'Yassine El Amrani', phone:'+212612345678', email:'yassine@example.com', source:'Leads - Riad Booking - Adv+', stage:'New', notes:'', nextFollowUp:todayISO(), createdAt:new Date().toISOString()});
+  state.prospects.push({id:uid(), name:'Salma Ouazzani', company:'Kech Furniture', channel:'LinkedIn', status:'To contact', notes:'Just started running Meta ads — weak creatives.', nextAction:'Send LinkedIn DM', nextActionDate:todayISO(), outreach:'', createdAt:new Date().toISOString()});
+  save(); route('dashboard'); toast('Sample data loaded.');
+}
+
+/* ============================= CLIENTS ============================= */
+function renderClients(el){
+  el.innerHTML=`<h1>Clients</h1><div class="sub">Your client base. Currency and target CPA/CPL drive the ads verdicts.</div>
+  <div class="toolbar"><button class="btn" id="btnAddClient" onclick="editClient()">+ Add client</button></div>
+  <div class="card">${state.clients.length? `<table id="clientsTable"><thead><tr><th>Name</th><th>Contact</th><th>Currency</th><th class="num">Target CPA/CPL</th><th class="num">Campaigns</th><th class="num">Leads</th><th></th></tr></thead><tbody>`+
+    state.clients.map(c=>`<tr>
+      <td><b>${esc(c.name)}</b>${c.company?`<div class="muted">${esc(c.company)}</div>`:''}</td>
+      <td>${esc(c.email||'')}<div class="muted">${esc(c.phone||'')}</div></td>
+      <td>${esc(c.currency)}</td>
+      <td class="num">${c.targetCPL?fmtMoney(c.targetCPL,c.currency):'<span class="badge b-na">not set</span>'}</td>
+      <td class="num">${state.campaigns.filter(x=>x.clientId===c.id).length}</td>
+      <td class="num">${state.leads.filter(x=>x.clientId===c.id).length}</td>
+      <td style="white-space:nowrap"><button class="btn2 btn-sm" onclick="editClient('${c.id}')">Edit</button>
+      <button class="btn2 btn-sm danger" onclick="delClient('${c.id}')">Delete</button></td></tr>`).join('')+'</tbody></table>' : '<div class="empty">No clients yet — add your first one.</div>'}</div>`;
+}
+function editClient(id){
+  const c = id?clientById(id):{currency:'MAD'};
+  openModal(`<h2>${id?'Edit':'New'} client</h2>
+    <div class="grid2">
+      <div><label>Client name *</label><input type="text" id="cName" value="${esc(c.name||'')}"></div>
+      <div><label>Company</label><input type="text" id="cCompany" value="${esc(c.company||'')}"></div>
+      <div><label>Email</label><input type="email" id="cEmail" value="${esc(c.email||'')}"></div>
+      <div><label>Phone / WhatsApp</label><input type="text" id="cPhone" value="${esc(c.phone||'')}"></div>
+      <div><label>Currency</label><select id="cCurrency">${['MAD','EUR','USD'].map(x=>`<option ${c.currency===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div><label>Target CPA / CPL (in client currency)</label><input type="number" id="cTarget" step="0.01" value="${c.targetCPL||''}" placeholder="e.g. 50"></div>
+    </div>
+    <label>Notes</label><textarea id="cNotes">${esc(c.notes||'')}</textarea>
+    <div class="modal-actions"><button class="btn2" onclick="closeModal()">Cancel</button><button class="btn" id="btnSaveClient" onclick="saveClient('${id||''}')">Save client</button></div>`);
+}
+function saveClient(id){
+  const name=document.getElementById('cName').value.trim();
+  if(!name){ toast('Client name is required.'); return; }
+  const data={ name, company:document.getElementById('cCompany').value.trim(), email:document.getElementById('cEmail').value.trim(),
+    phone:document.getElementById('cPhone').value.trim(), currency:document.getElementById('cCurrency').value,
+    targetCPL: parseFloat(document.getElementById('cTarget').value)||null, notes:document.getElementById('cNotes').value };
+  if(id){ Object.assign(clientById(id), data); } else { state.clients.push(Object.assign({id:uid(), createdAt:new Date().toISOString()}, data)); }
+  save(); closeModal(); route('clients'); toast('Client saved.');
+}
+function delClient(id){
+  if(!confirm('Delete this client AND its campaigns/leads/strategy?')) return;
+  state.clients = state.clients.filter(c=>c.id!==id);
+  state.campaigns = state.campaigns.filter(c=>c.clientId!==id);
+  state.leads = state.leads.filter(l=>l.clientId!==id);
+  delete state.strategies[id]; delete state.aiAds[id];
+  save(); route('clients');
+}
+
+/* ============================= ADS ANALYSIS ============================= */
+let adsClientFilter='';
+function renderAds(el){
+  const clients=state.clients;
+  el.innerHTML=`<h1>Ads Analysis</h1><div class="sub">Import Meta / Google Ads exports (CSV), get metrics + verdicts, build a combined client report.</div>
+  <div class="toolbar">
+    <select id="adsClientSel" style="width:220px" onchange="adsClientFilter=this.value; route('ads')">
+      <option value="">All clients</option>${clients.map(c=>`<option value="${c.id}" ${adsClientFilter===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
+    </select>
+    <button class="btn" id="btnImportAds" onclick="importAdsModal()">⬆ Import CSV</button>
+    <button class="btn2" id="btnAddCampaign" onclick="editCampaign()">+ Manual entry</button>
+    <span class="spacer"></span>
+    ${adsClientFilter?`<button class="btn2" id="btnAiAds" onclick="runAiAds('${adsClientFilter}')">✨ AI analysis</button>
+    <button class="btn" id="btnReport" onclick="showReport('${adsClientFilter}')">🖨 Client report</button>`:'<span class="muted">Select a client for AI analysis & report</span>'}
+  </div>
+  <div class="card" id="adsTableCard">${adsTable()}</div>
+  ${adsClientFilter && state.aiAds[adsClientFilter] ? `<h2>✨ AI analysis</h2><div class="ai-out" id="aiAdsOut">${mdToHtml(state.aiAds[adsClientFilter])}</div>`:''}
+  `;
+}
+function adsTable(){
+  let list = state.campaigns.slice();
+  if(adsClientFilter) list=list.filter(c=>c.clientId===adsClientFilter);
+  if(!list.length) return '<div class="empty">No campaigns yet. Export a CSV from Meta Ads Manager or Google Ads and import it here.</div>';
+  const groups={};
+  list.forEach(c=>{ (groups[c.clientId]=groups[c.clientId]||[]).push(c); });
+  let html='';
+  for(const [cid,items] of Object.entries(groups)){
+    const cl=clientById(cid); const cur=cl?cl.currency:'MAD'; const target=cl?cl.targetCPL:null;
+    const tot=items.reduce((a,c)=>{const m=metrics(c); a.spend+=m.spend;a.imp+=m.impressions;a.clk+=m.clicks;a.res+=m.results;a.rev+=m.revenue;return a;},{spend:0,imp:0,clk:0,res:0,rev:0});
+    const totCpl = tot.res>0?tot.spend/tot.res:NaN;
+    html+=`<h2 style="margin-top:6px">${esc(cl?cl.name:'Unknown client')} <span class="muted">— target ${target?fmtMoney(target,cur):'not set'}</span></h2>
+    <table class="adsTable"><thead><tr><th>Campaign</th><th>Platform</th><th class="num">Spend</th><th class="num">Impr.</th><th class="num">Clicks</th><th class="num">CTR</th><th class="num">CPM</th><th class="num">CPC</th><th class="num">Results</th><th class="num">CPA/CPL</th><th>Verdict</th><th></th></tr></thead><tbody>`;
+    for(const c of items){
+      const m=metrics(c), v=verdictFor(c,target), hints=diagnostics(c);
+      html+=`<tr data-campaign="${esc(c.name)}">
+        <td><b>${esc(c.name)}</b>${c.period?`<div class="muted">${esc(c.period)}</div>`:''}${hints.length?`<div class="muted">💡 ${esc(hints[0])}</div>`:''}</td>
+        <td>${c.platform==='meta'?'Meta':c.platform==='google'?'Google':'Other'}</td>
+        <td class="num">${fmtMoney(m.spend,cur)}</td><td class="num">${fmtNum(m.impressions)}</td><td class="num">${fmtNum(m.clicks)}</td>
+        <td class="num">${fmtPct(m.ctr,2)}</td><td class="num">${fmtMoney(m.cpm,cur)}</td><td class="num">${fmtMoney(m.cpc,cur)}</td>
+        <td class="num">${fmtNum(m.results)}</td><td class="num"><b>${fmtMoney(m.cpl,cur)}</b></td>
+        <td><span class="badge b-${v.code}" title="${esc(v.reason)}">${v.label}</span></td>
+        <td style="white-space:nowrap"><button class="btn2 btn-sm" onclick="editCampaign('${c.id}')">Edit</button> <button class="btn2 btn-sm danger" onclick="delCampaign('${c.id}')">✕</button></td></tr>`;
+    }
+    html+=`<tr class="total"><td>TOTAL (Meta + Google)</td><td></td><td class="num" data-total-spend>${fmtMoney(tot.spend,cur)}</td><td class="num">${fmtNum(tot.imp)}</td><td class="num">${fmtNum(tot.clk)}</td>
+      <td class="num">${fmtPct(tot.imp>0?tot.clk/tot.imp*100:NaN,2)}</td><td class="num">${fmtMoney(tot.imp>0?tot.spend/tot.imp*1000:NaN,cur)}</td><td class="num">${fmtMoney(tot.clk>0?tot.spend/tot.clk:NaN,cur)}</td>
+      <td class="num">${fmtNum(tot.res)}</td><td class="num" data-total-cpl>${fmtMoney(totCpl,cur)}</td><td></td><td></td></tr></tbody></table>`;
+  }
+  return html;
+}
+function editCampaign(id){
+  const c = id? state.campaigns.find(x=>x.id===id) : {platform:'meta', clientId:adsClientFilter||''};
+  openModal(`<h2>${id?'Edit':'Add'} campaign</h2>
+    <div class="grid2">
+      <div><label>Client *</label><select id="mClient">${state.clients.map(x=>`<option value="${x.id}" ${c.clientId===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
+      <div><label>Platform</label><select id="mPlatform">${['meta','google','other'].map(p=>`<option value="${p}" ${c.platform===p?'selected':''}>${p==='meta'?'Meta':p==='google'?'Google':'Other'}</option>`).join('')}</select></div>
+    </div>
+    <label>Campaign name *</label><input type="text" id="mName" value="${esc(c.name||'')}">
+    <div class="grid3">
+      <div><label>Spend</label><input type="number" id="mSpend" step="0.01" value="${c.spend??''}"></div>
+      <div><label>Impressions</label><input type="number" id="mImp" value="${c.impressions??''}"></div>
+      <div><label>Clicks</label><input type="number" id="mClk" value="${c.clicks??''}"></div>
+      <div><label>Results (leads/conv.)</label><input type="number" id="mRes" value="${c.results??''}"></div>
+      <div><label>Revenue (optional)</label><input type="number" id="mRev" step="0.01" value="${c.revenue||''}"></div>
+      <div><label>Period</label><input type="text" id="mPeriod" value="${esc(c.period||'')}" placeholder="e.g. June 2026"></div>
+    </div>
+    <div class="modal-actions"><button class="btn2" onclick="closeModal()">Cancel</button><button class="btn" id="btnSaveCampaign" onclick="saveCampaign('${id||''}')">Save</button></div>`);
+}
+function saveCampaign(id){
+  const name=document.getElementById('mName').value.trim();
+  const clientId=document.getElementById('mClient').value;
+  if(!name||!clientId){ toast('Client and campaign name are required.'); return; }
+  const data={ clientId, name, platform:document.getElementById('mPlatform').value,
+    spend:parseFloat(document.getElementById('mSpend').value)||0, impressions:parseFloat(document.getElementById('mImp').value)||0,
+    clicks:parseFloat(document.getElementById('mClk').value)||0, results:parseFloat(document.getElementById('mRes').value)||0,
+    revenue:parseFloat(document.getElementById('mRev').value)||0, period:document.getElementById('mPeriod').value.trim() };
+  if(id) Object.assign(state.campaigns.find(x=>x.id===id), data);
+  else state.campaigns.push(Object.assign({id:uid(), importedAt:new Date().toISOString()}, data));
+  save(); closeModal(); route('ads'); toast('Campaign saved.');
+}
+function delCampaign(id){ state.campaigns=state.campaigns.filter(c=>c.id!==id); save(); route('ads'); }
+
+/* --- CSV import flow --- */
+let pendingImport=null;
+function importAdsModal(){
+  if(!state.clients.length){ toast('Add a client first.'); route('clients'); return; }
+  openModal(`<h2>Import ads CSV</h2>
+    <p class="muted">Export from <b>Meta Ads Manager</b> (Campaigns → Export → CSV) or <b>Google Ads</b> (Campaigns → Download → CSV), then drop the file here. Columns are detected automatically.</p>
+    <label>Client</label><select id="impClient">${state.clients.map(x=>`<option value="${x.id}" ${adsClientFilter===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
+    <label>Period label (optional)</label><input type="text" id="impPeriod" placeholder="e.g. June 2026">
+    <label>CSV file</label><input type="file" id="impFile" accept=".csv,text/csv">
+    <div id="impPreview"></div>
+    <div class="modal-actions"><button class="btn2" onclick="closeModal()">Cancel</button><button class="btn" id="btnDoImport" onclick="confirmImport()" disabled>Import</button></div>`);
+  document.getElementById('impFile').addEventListener('change', e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const reader=new FileReader();
+    reader.onload=()=>previewImport(String(reader.result));
+    reader.readAsText(f);
+  });
+}
+function previewImport(text){
+  const rows=parseCSV(text);
+  const hi=findHeaderRow(rows);
+  const box=document.getElementById('impPreview');
+  if(hi<0){ box.innerHTML='<p class="muted" style="color:var(--bad)">Could not find a header row with campaign columns in this file.</p>'; return; }
+  const headers=rows[hi];
+  const map=autoMap(headers);
+  const platform=detectPlatform(headers);
+  const dataRows=rows.slice(hi+1).filter(r=>{
+    const nm=(r[map.name]||'').toString().trim();
+    return nm && !/^total/i.test(nm) && isFinite(parseNum(r[map.spend]));
+  });
+  pendingImport={headers, map, platform, dataRows};
+  const selHtml = (field)=>`<select data-map="${field}" onchange="pendingImport.map['${field}']=parseInt(this.value)">${['<option value="-1">—</option>'].concat(headers.map((h,i)=>`<option value="${i}" ${map[field]===i?'selected':''}>${esc(h)}</option>`)).join('')}</select>`;
+  box.innerHTML=`<p style="margin:10px 0 4px"><b>Detected platform:</b> ${platform==='meta'?'Meta':platform==='google'?'Google Ads':'Other'} · <b>${dataRows.length}</b> campaigns found</p>
+    <div class="grid3">
+      <div><label>Campaign name</label>${selHtml('name')}</div>
+      <div><label>Spend</label>${selHtml('spend')}</div>
+      <div><label>Impressions</label>${selHtml('impressions')}</div>
+      <div><label>Clicks</label>${selHtml('clicks')}</div>
+      <div><label>Results</label>${selHtml('results')}</div>
+      <div><label>Revenue</label>${selHtml('revenue')}</div>
+    </div>
+    <div style="max-height:180px;overflow:auto;margin-top:10px"><table><thead><tr><th>Campaign</th><th class="num">Spend</th><th class="num">Impr.</th><th class="num">Clicks</th><th class="num">Results</th></tr></thead><tbody>
+    ${dataRows.slice(0,8).map(r=>`<tr><td>${esc(r[map.name])}</td><td class="num">${esc(r[map.spend])}</td><td class="num">${esc(r[map.impressions]||'')}</td><td class="num">${esc(r[map.clicks]||'')}</td><td class="num">${esc(r[map.results]||'')}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  document.getElementById('btnDoImport').disabled = dataRows.length===0;
+}
+function confirmImport(){
+  if(!pendingImport) return;
+  const clientId=document.getElementById('impClient').value;
+  const period=document.getElementById('impPeriod').value.trim();
+  const {map, platform, dataRows}=pendingImport;
+  let n=0;
+  for(const r of dataRows){
+    const get=i=> i>=0? r[i]:'';
+    state.campaigns.push({ id:uid(), clientId, platform, name:String(get(map.name)).trim(), period,
+      spend:parseNum(get(map.spend))||0, impressions:parseNum(get(map.impressions))||0, clicks:parseNum(get(map.clicks))||0,
+      results:parseNum(get(map.results))||0, revenue:parseNum(get(map.revenue))||0, importedAt:new Date().toISOString() });
+    n++;
+  }
+  pendingImport=null; save(); closeModal(); adsClientFilter=clientId; route('ads'); toast(n+' campaigns imported.');
+}
+async function runAiAds(clientId){
+  if(!aiGuard()) return;
+  const cl=clientById(clientId); const list=state.campaigns.filter(c=>c.clientId===clientId);
+  if(!list.length){ toast('No campaigns for this client.'); return; }
+  const cur=cl.currency;
+  const lines=list.map(c=>{const m=metrics(c); return `- [${c.platform}] "${c.name}": spend ${m.spend} ${cur}, impressions ${m.impressions}, clicks ${m.clicks}, CTR ${isFinite(m.ctr)?m.ctr.toFixed(2):'n/a'}%, results ${m.results}, CPA/CPL ${isFinite(m.cpl)?m.cpl.toFixed(2):'n/a'} ${cur}${m.roas?`, ROAS ${m.roas.toFixed(2)}`:''}`;}).join('\n');
+  const btn=document.getElementById('btnAiAds'); if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span> Analyzing…';}
+  try{
+    const out=await aiCall(bizContext(),
+`Analyze this client's ad account and give optimization decisions.
+Client: ${cl.name} (${cl.company||''}). Target CPA/CPL: ${cl.targetCPL||'not set'} ${cur}. Notes: ${cl.notes||'—'}
+Campaigns (Meta + Google combined):
+${lines}
+
+Give me:
+## Verdict per campaign
+One line each: scale / keep / watch / kill + why.
+## Cross-platform view
+Where should the next dirham/euro/dollar go and why.
+## Top 3 optimization actions this week
+Specific and actionable (creatives, audiences, bids, landing page).`);
+    state.aiAds[clientId]=out; save(); route('ads'); toast('AI analysis ready.');
+  }catch(e){ toast('AI error: '+e.message, 5000); if(btn){btn.disabled=false; btn.textContent='✨ AI analysis';} }
+}
+
+/* --- Report --- */
+function showReport(clientId){
+  const cl=clientById(clientId); if(!cl) return;
+  const list=state.campaigns.filter(c=>c.clientId===clientId);
+  const cur=cl.currency, target=cl.targetCPL;
+  const byPlat={};
+  list.forEach(c=>{ (byPlat[c.platform]=byPlat[c.platform]||[]).push(c); });
+  const platName=p=>p==='meta'?'Meta Ads':p==='google'?'Google Ads':'Other platforms';
+  const totAll=list.reduce((a,c)=>{const m=metrics(c);a.spend+=m.spend;a.imp+=m.impressions;a.clk+=m.clicks;a.res+=m.results;return a;},{spend:0,imp:0,clk:0,res:0});
+  let body='';
+  for(const [p,items] of Object.entries(byPlat)){
+    const t=items.reduce((a,c)=>{const m=metrics(c);a.spend+=m.spend;a.imp+=m.impressions;a.clk+=m.clicks;a.res+=m.results;return a;},{spend:0,imp:0,clk:0,res:0});
+    body+=`<h2>${platName(p)}</h2><table><thead><tr><th>Campaign</th><th class="num">Spend</th><th class="num">Impr.</th><th class="num">Clicks</th><th class="num">CTR</th><th class="num">Results</th><th class="num">CPA/CPL</th><th>Status</th></tr></thead><tbody>
+    ${items.map(c=>{const m=metrics(c),v=verdictFor(c,target);return `<tr><td>${esc(c.name)}</td><td class="num">${fmtMoney(m.spend,cur)}</td><td class="num">${fmtNum(m.impressions)}</td><td class="num">${fmtNum(m.clicks)}</td><td class="num">${fmtPct(m.ctr,2)}</td><td class="num">${fmtNum(m.results)}</td><td class="num">${fmtMoney(m.cpl,cur)}</td><td><span class="badge b-${v.code}">${v.label}</span></td></tr>`;}).join('')}
+    <tr class="total"><td>Subtotal</td><td class="num">${fmtMoney(t.spend,cur)}</td><td class="num">${fmtNum(t.imp)}</td><td class="num">${fmtNum(t.clk)}</td><td class="num">${fmtPct(t.imp>0?t.clk/t.imp*100:NaN,2)}</td><td class="num">${fmtNum(t.res)}</td><td class="num">${fmtMoney(t.res>0?t.spend/t.res:NaN,cur)}</td><td></td></tr></tbody></table>`;
+  }
+  const rv=document.getElementById('reportView');
+  rv.innerHTML=`
+    <div class="noprint" style="margin-bottom:16px; display:flex; gap:8px;">
+      <button class="btn" onclick="window.print()">🖨 Print / Save as PDF</button>
+      <button class="btn2" onclick="document.getElementById('reportView').classList.remove('open')">Close</button>
+    </div>
+    <div class="rep-head">
+      <div><div class="rep-brand">${esc(state.settings.businessName||'MasterAds Pro')}</div><div class="muted">Advertising performance report${state.settings.ownerName?' · '+esc(state.settings.ownerName):''}</div></div>
+      <div style="text-align:right"><b>${esc(cl.name)}</b><div class="muted">${esc(cl.company||'')}</div><div class="muted">${esc(new Date().toLocaleDateString())}</div></div>
+    </div>
+    <div class="row" style="margin-bottom:8px">
+      <div class="tile"><div class="k">Total spend (all platforms)</div><div class="v" id="repTotalSpend">${fmtMoney(totAll.spend,cur)}</div></div>
+      <div class="tile"><div class="k">Total results</div><div class="v">${fmtNum(totAll.res)}</div></div>
+      <div class="tile"><div class="k">Blended CPA/CPL</div><div class="v">${fmtMoney(totAll.res>0?totAll.spend/totAll.res:NaN,cur)}</div><div class="s">Target: ${target?fmtMoney(target,cur):'—'}</div></div>
+      <div class="tile"><div class="k">Blended CTR</div><div class="v">${fmtPct(totAll.imp>0?totAll.clk/totAll.imp*100:NaN,2)}</div></div>
+    </div>
+    ${body}
+    ${state.aiAds[clientId]?`<h2>Analysis & recommendations</h2><div class="ai-out">${mdToHtml(state.aiAds[clientId])}</div>`:''}
+    <p class="muted" style="margin-top:26px">Generated with ${esc(state.settings.businessName||'MasterAds Pro')} · ${esc(new Date().toISOString().slice(0,10))}</p>`;
+  rv.classList.add('open');
+}
+
+/* ============================= CRM ============================= */
+let crmClientFilter='';
+function renderCRM(el){
+  let leads=state.leads.slice();
+  if(crmClientFilter) leads=leads.filter(l=>l.clientId===crmClientFilter);
+  el.innerHTML=`<h1>CRM Pipeline</h1><div class="sub">Leads flow: New → Contacted → Qualified → Proposal → Won/Lost. Import from Google Sheets/Meta CSV exports.</div>
+  <div class="toolbar">
+    <select style="width:220px" id="crmClientSel" onchange="crmClientFilter=this.value; route('crm')"><option value="">All clients</option>${state.clients.map(c=>`<option value="${c.id}" ${crmClientFilter===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select>
+    <button class="btn" id="btnImportLeads" onclick="importLeadsModal()">⬆ Import leads CSV</button>
+    <button class="btn2" id="btnAddLead" onclick="editLead()">+ Add lead</button>
+    <span class="spacer"></span>
+    <button class="btn2" onclick="exportLeadsCSV()">⬇ Export CSV</button>
+  </div>
+  <div class="kanban" id="kanban">
+    ${STAGES.map(st=>{
+      const items=leads.filter(l=>l.stage===st);
+      return `<div class="kcol" data-stage="${st}"><h3>${st} · ${items.length}</h3>
+        ${items.map(l=>{const heat=leadHeat(scoreLead(l)); return `<div class="kcard" data-lead="${l.id}">
+          <div class="nm" onclick="openLead('${l.id}')">${esc(l.name)}</div>
+          <div class="muted">${esc(clientName(l.clientId))}${l.phone?' · '+esc(l.phone):''}</div>
+          <div style="margin-top:4px"><span class="badge ${heat.cls}">${heat.label}</span>${l.nextFollowUp?` <span class="tag">📅 ${esc(l.nextFollowUp)}</span>`:''}</div>
+          <div class="mv">
+            ${STAGES.indexOf(st)>0?`<button class="btn2 btn-sm" onclick="moveLead('${l.id}',-1)">◀</button>`:''}
+            ${STAGES.indexOf(st)<STAGES.length-1?`<button class="btn2 btn-sm" onclick="moveLead('${l.id}',1)">▶</button>`:''}
+          </div></div>`;}).join('')}
+      </div>`;}).join('')}
+  </div>`;
+}
+function moveLead(id, dir){
+  const l=state.leads.find(x=>x.id===id); if(!l) return;
+  const i=STAGES.indexOf(l.stage)+dir;
+  if(i<0||i>=STAGES.length) return;
+  l.stage=STAGES[i];
+  (l.history=l.history||[]).push({at:new Date().toISOString(), event:'Moved to '+l.stage});
+  save(); route('crm');
+}
+function editLead(id){
+  const l=id? state.leads.find(x=>x.id===id) : {stage:'New', clientId:crmClientFilter||''};
+  openModal(`<h2>${id?'Edit':'Add'} lead</h2>
+    <div class="grid2">
+      <div><label>Name *</label><input type="text" id="lName" value="${esc(l.name||'')}"></div>
+      <div><label>Client</label><select id="lClient"><option value="">— (own lead)</option>${state.clients.map(x=>`<option value="${x.id}" ${l.clientId===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
+      <div><label>Phone / WhatsApp</label><input type="text" id="lPhone" value="${esc(l.phone||'')}"></div>
+      <div><label>Email</label><input type="email" id="lEmail" value="${esc(l.email||'')}"></div>
+      <div><label>Source</label><input type="text" id="lSource" value="${esc(l.source||'')}" placeholder="campaign / form / referral"></div>
+      <div><label>Stage</label><select id="lStage">${STAGES.map(s=>`<option ${l.stage===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div><label>Next follow-up</label><input type="date" id="lFollow" value="${esc(l.nextFollowUp||'')}"></div>
+    </div>
+    <label>Notes</label><textarea id="lNotes">${esc(l.notes||'')}</textarea>
+    <div class="modal-actions"><button class="btn2" onclick="closeModal()">Cancel</button><button class="btn" id="btnSaveLead" onclick="saveLead('${id||''}')">Save lead</button></div>`);
+}
+function saveLead(id){
+  const name=document.getElementById('lName').value.trim();
+  if(!name){ toast('Lead name is required.'); return; }
+  const data={ name, clientId:document.getElementById('lClient').value, phone:document.getElementById('lPhone').value.trim(),
+    email:document.getElementById('lEmail').value.trim(), source:document.getElementById('lSource').value.trim(),
+    stage:document.getElementById('lStage').value, nextFollowUp:document.getElementById('lFollow').value, notes:document.getElementById('lNotes').value };
+  if(id) Object.assign(state.leads.find(x=>x.id===id), data);
+  else state.leads.push(Object.assign({id:uid(), createdAt:new Date().toISOString(), history:[]}, data));
+  save(); closeModal(); route('crm'); toast('Lead saved.');
+}
+function openLead(id){
+  const l=state.leads.find(x=>x.id===id); if(!l) return;
+  const heat=leadHeat(scoreLead(l));
+  openModal(`<h2>${esc(l.name)} <span class="badge ${heat.cls}">${heat.label} ${scoreLead(l)}/100</span></h2>
+    <p class="muted">${esc(clientName(l.clientId))} · ${esc(l.source||'no source')} · added ${esc((l.createdAt||'').slice(0,10))}</p>
+    <p>${l.phone?('📞 <b>'+esc(l.phone)+'</b> '):''} ${l.email?('· ✉️ '+esc(l.email)):''}</p>
+    <label>Stage</label><select id="dStage">${STAGES.map(s=>`<option ${l.stage===s?'selected':''}>${s}</option>`).join('')}</select>
+    <label>Next follow-up</label><input type="date" id="dFollow" value="${esc(l.nextFollowUp||'')}">
+    <label>Notes</label><textarea id="dNotes">${esc(l.notes||'')}</textarea>
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap">
+      <button class="btn2" id="btnMsg" onclick="genLeadMessage('${l.id}')">💬 Follow-up message</button>
+      <button class="btn2" id="btnQualify" onclick="aiQualify('${l.id}')">✨ AI qualify</button>
+    </div>
+    <div id="leadAiOut">${l.aiOut?`<div class="ai-out">${mdToHtml(l.aiOut)}</div>`:''}</div>
+    <div class="modal-actions">
+      <button class="btn2 danger" onclick="delLead('${l.id}')">Delete</button>
+      <span style="flex:1"></span>
+      <button class="btn2" onclick="closeModal()">Close</button>
+      <button class="btn" onclick="saveLeadDetail('${l.id}')">Save</button>
+    </div>`);
+}
+function saveLeadDetail(id){
+  const l=state.leads.find(x=>x.id===id); if(!l) return;
+  const newStage=document.getElementById('dStage').value;
+  if(newStage!==l.stage) (l.history=l.history||[]).push({at:new Date().toISOString(), event:'Moved to '+newStage});
+  l.stage=newStage; l.nextFollowUp=document.getElementById('dFollow').value; l.notes=document.getElementById('dNotes').value;
+  save(); closeModal(); route('crm'); toast('Lead updated.');
+}
+function delLead(id){ if(!confirm('Delete this lead?'))return; state.leads=state.leads.filter(l=>l.id!==id); save(); closeModal(); route('crm'); }
+function genLeadMessage(id){
+  const l=state.leads.find(x=>x.id===id); if(!l) return;
+  const cl=clientById(l.clientId);
+  const offline=()=>{
+    const biz=cl?cl.name:(state.settings.businessName||'our team');
+    l.aiOut=`## WhatsApp / SMS\nHello ${l.name.split(' ')[0]} 👋 This is ${biz}. You recently asked about our offer${l.source?` (via "${l.source}")`:''} — are you still interested? I can answer your questions or book you a quick call today. When suits you best?\n\n## Email\n**Subject:** Your request — quick next step\n\nHello ${l.name.split(' ')[0]},\n\nThank you for your interest${l.source?` via ${l.source}`:''}. To move forward I just need 2 minutes of your time — reply with a good time to call, or answer directly here.\n\nBest regards,\n${state.settings.ownerName||biz}`;
+    save(); openLead(id);
+  };
+  if(!state.settings.apiKey){ offline(); toast('Template message generated (add an API key for AI-personalized ones).'); return; }
+  const btn=document.getElementById('btnMsg'); if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>';}
+  aiCall(bizContext(), `Write a short WhatsApp follow-up message AND a short email (with subject) to re-engage this lead. Language: match the likely language of the lead (Moroccan leads often prefer French; default to French if unsure, English if the name/context is clearly anglophone). Warm, human, not salesy, max 60 words each.
+Lead: ${l.name}, phone: ${l.phone||'—'}, email: ${l.email||'—'}, came from: ${l.source||'ad campaign'}, current stage: ${l.stage}, notes: ${l.notes||'—'}. Client/business: ${cl?cl.name+' ('+(cl.notes||'')+')':state.settings.businessName}.
+Format: ## WhatsApp ...text... ## Email ...subject + text...`, 1000)
+  .then(out=>{ l.aiOut=out; save(); openLead(id); })
+  .catch(e=>{ toast('AI error: '+e.message,5000); offline(); });
+}
+function aiQualify(id){
+  if(!aiGuard()) return;
+  const l=state.leads.find(x=>x.id===id); if(!l) return;
+  const cl=clientById(l.clientId);
+  const btn=document.getElementById('btnQualify'); if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>';}
+  aiCall(bizContext(), `Qualify this lead for ${cl?('client "'+cl.name+'" ('+(cl.notes||'')+')'):'our agency'}.
+Lead: ${l.name}; phone: ${l.phone||'missing'}; email: ${l.email||'missing'}; source: ${l.source||'unknown'}; stage: ${l.stage}; notes: ${l.notes||'none'}; created: ${(l.createdAt||'').slice(0,10)}.
+Reply with:
+## Qualification
+Score /100 with one-line justification.
+## Best next action
+The single best next move, today.
+## Questions to ask
+3 qualification questions to send them.`, 800)
+  .then(out=>{ l.aiOut=out; save(); openLead(id); })
+  .catch(e=>{ toast('AI error: '+e.message,5000); if(btn){btn.disabled=false; btn.textContent='✨ AI qualify';} });
+}
+function importLeadsModal(){
+  openModal(`<h2>Import leads CSV</h2>
+    <p class="muted">Works with Google Sheets exports (File → Download → CSV) and Meta Lead Ads exports. Columns auto-detected: name, phone, email, source.</p>
+    <label>Assign to client</label><select id="limpClient"><option value="">— (own leads)</option>${state.clients.map(x=>`<option value="${x.id}" ${crmClientFilter===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
+    <label>CSV file</label><input type="file" id="limpFile" accept=".csv,text/csv">
+    <div id="limpPreview"></div>
+    <div class="modal-actions"><button class="btn2" onclick="closeModal()">Cancel</button><button class="btn" id="btnDoLeadImport" onclick="confirmLeadImport()" disabled>Import</button></div>`);
+  document.getElementById('limpFile').addEventListener('change', e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const reader=new FileReader(); reader.onload=()=>previewLeadImport(String(reader.result)); reader.readAsText(f);
+  });
+}
+let pendingLeadImport=null;
+function previewLeadImport(text){
+  const rows=parseCSV(text);
+  if(rows.length<2){ document.getElementById('limpPreview').innerHTML='<p class="muted" style="color:var(--bad)">File looks empty.</p>'; return; }
+  const headers=rows[0]; const map=autoMapLeads(headers);
+  const dataRows=rows.slice(1).filter(r=>map.name>=0 && String(r[map.name]||'').trim());
+  pendingLeadImport={headers,map,dataRows};
+  document.getElementById('limpPreview').innerHTML=`<p style="margin:10px 0 4px"><b>${dataRows.length}</b> leads found</p>
+    <div style="max-height:160px;overflow:auto"><table><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Source</th></tr></thead><tbody>
+    ${dataRows.slice(0,8).map(r=>`<tr><td>${esc(r[map.name])}</td><td>${esc(map.phone>=0?r[map.phone]:'')}</td><td>${esc(map.email>=0?r[map.email]:'')}</td><td>${esc(map.source>=0?r[map.source]:'')}</td></tr>`).join('')}</tbody></table></div>`;
+  document.getElementById('btnDoLeadImport').disabled=dataRows.length===0;
+}
+function confirmLeadImport(){
+  if(!pendingLeadImport) return;
+  const clientId=document.getElementById('limpClient').value;
+  const {map,dataRows}=pendingLeadImport;
+  let n=0, skipped=0;
+  for(const r of dataRows){
+    const name=String(r[map.name]).trim();
+    const phone=map.phone>=0?String(r[map.phone]||'').trim():'';
+    const email=map.email>=0?String(r[map.email]||'').trim():'';
+    const dup = state.leads.some(l=> (phone && l.phone===phone) || (email && l.email && l.email===email));
+    if(dup){ skipped++; continue; }
+    state.leads.push({ id:uid(), clientId, name, phone, email,
+      source: map.source>=0?String(r[map.source]||'').trim():'',
+      stage:'New', notes:'', nextFollowUp: todayISO(), createdAt: new Date().toISOString(), history:[] });
+    n++;
+  }
+  pendingLeadImport=null; save(); closeModal(); route('crm');
+  toast(n+' leads imported'+(skipped?(' · '+skipped+' duplicates skipped'):'')+'. Follow-up set to today.');
+}
+function exportLeadsCSV(){
+  const rows=[['Name','Client','Phone','Email','Source','Stage','Score','Next follow-up','Notes','Created']];
+  state.leads.forEach(l=>rows.push([l.name,clientName(l.clientId),l.phone||'',l.email||'',l.source||'',l.stage,scoreLead(l),l.nextFollowUp||'',(l.notes||'').replace(/\n/g,' '),(l.createdAt||'').slice(0,10)]));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  download('masterads-leads-'+todayISO()+'.csv', csv, 'text/csv');
+}
+
+/* ============================= STRATEGY ============================= */
+let stratClient='';
+function renderStrategy(el){
+  el.innerHTML=`<h1>Strategy</h1><div class="sub">Strategic marketing per client: market, personas, pains, competitors → AI media plan & budget allocation.</div>
+  <div class="toolbar"><select id="stratClientSel" style="width:240px" onchange="stratClient=this.value; route('strategy')"><option value="">Select a client…</option>${state.clients.map(c=>`<option value="${c.id}" ${stratClient===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+  ${stratClient?stratForm(stratClient):'<div class="card empty">Pick a client to build their strategy.</div>'}`;
+}
+function stratForm(cid){
+  const s=state.strategies[cid]||{};
+  const cl=clientById(cid);
+  const adLib=(q)=>`https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=MA&q=${encodeURIComponent(q)}&media_type=all`;
+  return `<div class="card">
+    <div class="grid2">
+      <div><label>Market & offer</label><textarea id="sMarket" placeholder="What do they sell, to whom, at what price point, in which city/country?">${esc(s.market||'')}</textarea></div>
+      <div><label>Buyer personas</label><textarea id="sPersonas" placeholder="Who buys? Age, situation, what they want…">${esc(s.personas||'')}</textarea></div>
+      <div><label>Pain points & desires</label><textarea id="sPains" placeholder="What problem does the offer solve? What outcome do buyers crave?">${esc(s.pains||'')}</textarea></div>
+      <div><label>Competitors (one per line)</label><textarea id="sCompetitors" placeholder="Competitor names — use the ad library links below to spy on their ads">${esc(s.competitors||'')}</textarea></div>
+      <div><label>Business objective</label><input type="text" id="sObjective" value="${esc(s.objective||'')}" placeholder="e.g. 60 qualified leads/month at ≤ 50 MAD"></div>
+      <div><label>Monthly ad budget (${esc(cl.currency)})</label><input type="number" id="sBudget" value="${s.budget||''}" placeholder="e.g. 5000"></div>
+    </div>
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+      <button class="btn2" id="btnSaveStrat" onclick="saveStrategy('${cid}')">💾 Save inputs</button>
+      <button class="btn" id="btnAiStrat" onclick="runAiStrategy('${cid}')">✨ Generate strategy & media plan</button>
+    </div>
+    <div class="muted" style="margin-top:10px">🔎 Competitor ad spying:
+      ${(s.competitors||'').split('\n').filter(x=>x.trim()).slice(0,5).map(c=>`<a href="${adLib(c.trim())}" target="_blank" rel="noopener">${esc(c.trim())} → Meta Ad Library</a>`).join(' · ')||'add competitors above, save, and links appear here'}
+      · <a href="https://adstransparency.google.com/?region=MA" target="_blank" rel="noopener">Google Ads Transparency Center</a>
+    </div>
+  </div>
+  ${s.aiPlan?`<h2>✨ Strategy & media plan</h2><div class="ai-out" id="stratOut">${mdToHtml(s.aiPlan)}</div>`:''}`;
+}
+function saveStrategy(cid, silent){
+  const s=state.strategies[cid]||(state.strategies[cid]={});
+  s.market=document.getElementById('sMarket').value; s.personas=document.getElementById('sPersonas').value;
+  s.pains=document.getElementById('sPains').value; s.competitors=document.getElementById('sCompetitors').value;
+  s.objective=document.getElementById('sObjective').value; s.budget=parseFloat(document.getElementById('sBudget').value)||null;
+  save(); if(!silent){ route('strategy'); toast('Strategy inputs saved.'); }
+}
+async function runAiStrategy(cid){
+  if(!aiGuard()) return;
+  saveStrategy(cid, true);
+  const s=state.strategies[cid], cl=clientById(cid);
+  const btn=document.getElementById('btnAiStrat'); if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span> Generating…';}
+  try{
+    const out=await aiCall(bizContext(),
+`Build a marketing strategy + media plan for this client.
+Client: ${cl.name} (${cl.company||''}), currency ${cl.currency}, target CPA/CPL ${cl.targetCPL||'?'} ${cl.currency}.
+Market & offer: ${s.market||'—'}
+Personas: ${s.personas||'—'}
+Pains/desires: ${s.pains||'—'}
+Competitors: ${s.competitors||'—'}
+Objective: ${s.objective||'—'}
+Monthly budget: ${s.budget||'?'} ${cl.currency}
+
+Deliver:
+## Positioning & angles
+The core message + 3 creative angles ranked.
+## Funnel
+Simple funnel (ad → landing → conversion) with what each step must say.
+## Media plan & budget split
+Table-like list: platform / campaign type / objective / monthly budget in ${cl.currency} / expected CPL range. Must sum to the stated budget.
+## KPIs & kill criteria
+What we measure weekly and when we cut a campaign.
+## First 14 days
+Day-by-day-ish launch checklist.`, 6000);
+    s.aiPlan=out; save(); route('strategy'); toast('Strategy generated.');
+  }catch(e){ toast('AI error: '+e.message,5000); if(btn){btn.disabled=false; btn.textContent='✨ Generate strategy & media plan';} }
+}
+
+/* ============================= PROSPECTION ============================= */
+function renderProspection(el){
+  el.innerHTML=`<h1>Prospection</h1><div class="sub">Find your next clients: tracker + outreach writer + playbook of tactics that work for media buyers.</div>
+  <div class="toolbar"><button class="btn" id="btnAddProspect" onclick="editProspect()">+ Add prospect</button></div>
+  <div class="card">${state.prospects.length? `<table id="prospectsTable"><thead><tr><th>Prospect</th><th>Channel</th><th>Status</th><th>Next action</th><th>Due</th><th></th></tr></thead><tbody>`+
+    state.prospects.map(p=>`<tr>
+      <td><b>${esc(p.name)}</b>${p.company?`<div class="muted">${esc(p.company)}</div>`:''}</td>
+      <td>${esc(p.channel)}</td><td><span class="tag">${esc(p.status)}</span></td>
+      <td>${esc(p.nextAction||'—')}</td><td>${esc(p.nextActionDate||'—')}</td>
+      <td style="white-space:nowrap"><button class="btn2 btn-sm" onclick="openProspect('${p.id}')">Open</button>
+      <button class="btn2 btn-sm danger" onclick="delProspect('${p.id}')">✕</button></td></tr>`).join('')+'</tbody></table>' : '<div class="empty">No prospects yet. Use the playbook below to find some today.</div>'}</div>
+  <h2>📕 Prospection playbook — original tactics for a media buyer</h2>
+  <details class="play"><summary>1. Ad Library Sniping — catch businesses that JUST started running ads</summary><div class="bd">
+    Businesses already paying for ads have budget and intent — the weak ones need you. Weekly routine (30 min):<br>
+    <b>1.</b> Open <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=MA&media_type=all" target="_blank" rel="noopener">Meta Ad Library (Morocco)</a> and search your niche keywords (dentiste, immobilier, restaurant, école privée…).<br>
+    <b>2.</b> Look for: only 1-2 active ads · started &lt; 30 days ago · boosted-post look (no CTA, no offer, raw image). These are self-managed accounts burning money.<br>
+    <b>3.</b> Screenshot their ad, write 2 specific improvements, send it to them (DM/email): <i>"I saw your ad running since [date] — here are 2 things costing you money right now."</i> Specific critique beats any pitch.<br>
+    <b>4.</b> Same play on <a href="https://adstransparency.google.com/?region=MA" target="_blank" rel="noopener">Google Ads Transparency Center</a> for search advertisers.</div></details>
+  <details class="play"><summary>2. The Free Teardown — your highest-converting offer</summary><div class="bd">
+    Offer a free 10-minute Loom-style audit of their ads/landing page instead of a "call". Record your screen, point at 3 concrete leaks, send it. It proves competence before you ask for anything. Close with: <i>"If you want, I'll fix these 3 things in the first 2 weeks — paid only if you see the difference."</i></div></details>
+  <details class="play"><summary>3. LinkedIn: comment-first, DM-second</summary><div class="bd">
+    Don't cold-DM strangers. For 2 weeks, leave one useful comment/day on posts by owners/marketing managers in your niche (real observations with numbers). Then DM referencing your comments. Acceptance and reply rates multiply. Search filters: job titles "founder / gérant / directeur marketing" + your city.</div></details>
+  <details class="play"><summary>4. Hiring signals = budget signals</summary><div class="bd">
+    A company posting a job for "community manager", "responsable marketing" or "commercial" has marketing budget and unsolved growth problems. Check LinkedIn Jobs + Rekrute/Anapec weekly for these posts in your niches. Pitch: <i>"While you hire, I can run the ads — and hand over a working system to whoever you recruit."</i></div></details>
+  <details class="play"><summary>5. Referral engine on delivered results</summary><div class="bd">
+    After every good monthly report, send it to the client with one line: <i>"Do you know ONE business owner who'd want results like this? Intro = one free extra campaign for you."</i> Systematic, not occasional — put a recurring prospection task on the 1st of each month.</div></details>
+  <details class="play"><summary>6. Niche + city landing pages (inbound while you sleep)</summary><div class="bd">
+    One-page sites: "Ads pour dentistes à Casablanca", "Google Ads pour écoles privées à Rabat"… with one case study + WhatsApp button. Cheap Google Search campaigns on "agence publicité + [niche/ville]" bring pre-qualified inbound leads. You're a media buyer — be your own best case study.</div></details>
+  <details class="play"><summary>7. Partner channel: web designers & freelancers</summary><div class="bd">
+    Web designers finish a site and their client immediately asks "how do I get traffic?" — that's your lead. Offer designers 10-15% recurring referral fee. 5 active partners ≈ a steady lead stream with zero ad spend.</div></details>`;
+}
+function editProspect(id){
+  const p=id? state.prospects.find(x=>x.id===id) : {channel:'LinkedIn', status:'To contact'};
+  openModal(`<h2>${id?'Edit':'Add'} prospect</h2>
+    <div class="grid2">
+      <div><label>Name *</label><input type="text" id="pName" value="${esc(p.name||'')}"></div>
+      <div><label>Company</label><input type="text" id="pCompany" value="${esc(p.company||'')}"></div>
+      <div><label>Channel</label><select id="pChannel">${['LinkedIn','Cold email','WhatsApp','Instagram DM','Referral','Ad Library sniping','Other'].map(x=>`<option ${p.channel===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div><label>Status</label><select id="pStatus">${PSTAGES.map(x=>`<option ${p.status===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div><label>Next action</label><input type="text" id="pAction" value="${esc(p.nextAction||'')}" placeholder="e.g. Send teardown DM"></div>
+      <div><label>Due date</label><input type="date" id="pDate" value="${esc(p.nextActionDate||'')}"></div>
+    </div>
+    <label>Notes / what you observed (their ads, their site, pain points…)</label><textarea id="pNotes">${esc(p.notes||'')}</textarea>
+    <div class="modal-actions"><button class="btn2" onclick="closeModal()">Cancel</button><button class="btn" id="btnSaveProspect" onclick="saveProspect('${id||''}')">Save</button></div>`);
+}
+function saveProspect(id){
+  const name=document.getElementById('pName').value.trim();
+  if(!name){ toast('Name is required.'); return; }
+  const data={ name, company:document.getElementById('pCompany').value.trim(), channel:document.getElementById('pChannel').value,
+    status:document.getElementById('pStatus').value, nextAction:document.getElementById('pAction').value.trim(),
+    nextActionDate:document.getElementById('pDate').value, notes:document.getElementById('pNotes').value };
+  if(id) Object.assign(state.prospects.find(x=>x.id===id), data);
+  else state.prospects.push(Object.assign({id:uid(), createdAt:new Date().toISOString(), outreach:''}, data));
+  save(); closeModal(); route('prospection'); toast('Prospect saved.');
+}
+function delProspect(id){ if(!confirm('Delete this prospect?'))return; state.prospects=state.prospects.filter(p=>p.id!==id); save(); route('prospection'); }
+function openProspect(id){
+  const p=state.prospects.find(x=>x.id===id); if(!p) return;
+  openModal(`<h2>${esc(p.name)} <span class="tag">${esc(p.company||'')}</span></h2>
+    <p class="muted">${esc(p.channel)} · ${esc(p.status)}</p>
+    <label>Notes</label><textarea id="poNotes">${esc(p.notes||'')}</textarea>
+    <div class="grid2">
+      <div><label>Status</label><select id="poStatus">${PSTAGES.map(x=>`<option ${p.status===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div><label>Next action date</label><input type="date" id="poDate" value="${esc(p.nextActionDate||'')}"></div>
+    </div>
+    <label>Next action</label><input type="text" id="poAction" value="${esc(p.nextAction||'')}">
+    <div style="margin-top:10px"><button class="btn" id="btnOutreach" onclick="genOutreach('${p.id}')">✨ Write outreach (DM + email)</button></div>
+    <div id="poOut">${p.outreach?`<div class="ai-out">${mdToHtml(p.outreach)}</div>`:''}</div>
+    <div class="modal-actions"><button class="btn2" onclick="closeModal()">Close</button><button class="btn" onclick="saveProspectDetail('${p.id}')">Save</button></div>`);
+}
+function saveProspectDetail(id){
+  const p=state.prospects.find(x=>x.id===id); if(!p) return;
+  p.notes=document.getElementById('poNotes').value; p.status=document.getElementById('poStatus').value;
+  p.nextActionDate=document.getElementById('poDate').value; p.nextAction=document.getElementById('poAction').value;
+  save(); closeModal(); route('prospection'); toast('Prospect updated.');
+}
+function genOutreach(id){
+  const p=state.prospects.find(x=>x.id===id); if(!p) return;
+  const offline=()=>{
+    const first=p.name.split(' ')[0];
+    p.outreach=`## LinkedIn DM\nHello ${first} — I checked ${p.company||'your business'}${p.notes?` and noticed: ${p.notes.slice(0,120)}`:"'s ads"}. I run paid ads for businesses like yours (${state.settings.businessName||'MasterAds Pro'}). I recorded 2 quick improvements that would lower your cost per lead — want me to send them? No strings attached.\n\n## Cold email\n**Subject:** 2 things costing ${p.company||'you'} money in your ads\n\nHello ${first},\n\nI analyze ad accounts in your sector every week. Looking at ${p.company||'your business'}, I spotted 2 concrete issues (creative + targeting) that typically inflate cost per lead by 30-50%.\n\nI'd be happy to send you the 2 fixes — free, no call required. If they make sense, we can talk about me running it for you.\n\n${state.settings.ownerName||state.settings.businessName||''}`;
+    save(); openProspect(id);
+  };
+  if(!state.settings.apiKey){ offline(); toast('Template outreach generated (add an API key for AI-personalized ones).'); return; }
+  const btn=document.getElementById('btnOutreach'); if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span> Writing…';}
+  aiCall(bizContext(), `Write outreach for this prospect of my agency. Channel: ${p.channel}.
+Prospect: ${p.name}${p.company?', company: '+p.company:''}. My observations: ${p.notes||'none — keep it curiosity-based'}.
+Write:
+## LinkedIn DM
+Max 60 words, references the observation, offers a free specific teardown, zero pressure. French if the prospect seems Moroccan/French-speaking, else English.
+## Cold email
+Subject + max 110 words, same angle, one clear low-friction CTA.
+## Follow-up (3 days later)
+Max 30 words, light.`, 1200)
+  .then(out=>{ p.outreach=out; save(); openProspect(id); })
+  .catch(e=>{ toast('AI error: '+e.message,5000); offline(); });
+}
+
+/* ============================= SETTINGS ============================= */
+function renderSettings(el){
+  const s=state.settings;
+  el.innerHTML=`<h1>Settings</h1><div class="sub">Your business identity, AI key, and data backups.</div>
+  <div class="card"><h2 style="margin-top:0">Business</h2>
+    <div class="grid2">
+      <div><label>Business name (shown on reports)</label><input type="text" id="setBiz" value="${esc(s.businessName)}"></div>
+      <div><label>Your name</label><input type="text" id="setOwner" value="${esc(s.ownerName)}"></div>
+      <div><label>Email</label><input type="email" id="setEmail" value="${esc(s.email)}"></div>
+      <div><label>Phone</label><input type="text" id="setPhone" value="${esc(s.phone)}"></div>
+    </div></div>
+  <div class="card"><h2 style="margin-top:0">AI (Claude API)</h2>
+    <p class="muted">AI features (analysis narratives, strategy generation, outreach & qualification) use your own Anthropic API key, stored <b>only in this browser</b>. Get one at <a href="https://platform.claude.com" target="_blank" rel="noopener">platform.claude.com</a>. Each request sends only the relevant text to the API. Without a key, everything else still works (rule-based verdicts + templates).</p>
+    <div class="grid2">
+      <div><label>Anthropic API key</label><input type="password" id="setKey" value="${esc(s.apiKey)}" placeholder="sk-ant-..."></div>
+      <div><label>Model</label><select id="setModel">${[['claude-opus-4-8','Claude Opus 4.8 (best, default)'],['claude-sonnet-5','Claude Sonnet 5 (cheaper)'],['claude-haiku-4-5','Claude Haiku 4.5 (cheapest)']].map(([v,l])=>`<option value="${v}" ${s.model===v?'selected':''}>${l}</option>`).join('')}</select></div>
+    </div>
+    <div style="margin-top:10px"><button class="btn2" id="btnTestKey" onclick="testKey()">Test key</button> <span id="keyTestOut" class="muted"></span></div>
+  </div>
+  <div class="card"><h2 style="margin-top:0">Data</h2>
+    <p class="muted">Everything lives in this browser's storage. Export a backup regularly (it's a single JSON file).</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap">
+      <button class="btn" id="btnExport" onclick="exportBackup()">⬇ Export backup (JSON)</button>
+      <button class="btn2" onclick="document.getElementById('importBackupFile').click()">⬆ Import backup</button>
+      <input type="file" id="importBackupFile" accept=".json,application/json" style="display:none">
+      <button class="btn2 danger" onclick="wipeData()">🗑 Erase all data</button>
+    </div>
+  </div>
+  <div style="margin-top:8px"><button class="btn" id="btnSaveSettings" onclick="saveSettings()">Save settings</button></div>`;
+  document.getElementById('importBackupFile').addEventListener('change', e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const reader=new FileReader();
+    reader.onload=()=>{ try{ const j=JSON.parse(String(reader.result));
+        if(!j || typeof j!=='object' || !('clients' in j)){ toast('This does not look like a MasterAds Pro backup.'); return; }
+        state=Object.assign(defaultState(), j); save(); route('dashboard'); toast('Backup imported.');
+      }catch(err){ toast('Invalid JSON file.'); } };
+    reader.readAsText(f);
+  });
+}
+function saveSettings(){
+  const s=state.settings;
+  s.businessName=document.getElementById('setBiz').value.trim()||'MasterAds Pro';
+  s.ownerName=document.getElementById('setOwner').value.trim();
+  s.email=document.getElementById('setEmail').value.trim();
+  s.phone=document.getElementById('setPhone').value.trim();
+  s.apiKey=document.getElementById('setKey').value.trim();
+  s.model=document.getElementById('setModel').value;
+  save(); toast('Settings saved.');
+}
+async function testKey(){
+  saveSettings();
+  const out=document.getElementById('keyTestOut');
+  if(!state.settings.apiKey){ out.textContent='No key entered.'; return; }
+  out.innerHTML='<span class="spin"></span> testing…';
+  try{ await aiCall('You are a health check.', 'Reply with exactly: OK', 16); out.textContent='✅ Key works.'; }
+  catch(e){ out.textContent='❌ '+e.message; }
+}
+function download(name, content, mime){
+  const blob=new Blob([content],{type:mime||'application/octet-stream'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+function exportBackup(){ download('masterads-backup-'+todayISO()+'.json', JSON.stringify(state,null,2), 'application/json'); }
+function wipeData(){ if(!confirm('Erase ALL data in this browser? Export a backup first!'))return; localStorage.removeItem(LS_KEY); state=defaultState(); route('dashboard'); toast('All data erased.'); }
+
+/* ============================= EXPOSE FOR TESTS ============================= */
+window.MAP = { parseCSV, parseNum, autoMap, autoMapLeads, detectPlatform, findHeaderRow, metrics, verdictFor, fmtMoney, fmtNum, fmtPct, scoreLead, mdToHtml,
+  get state(){return state;}, set state(s){state=s; save();}, save, route, loadDemo };
+window.openLead=openLead; window.openProspect=openProspect; window.loadDemo=loadDemo;
+window.editClient=editClient; window.saveClient=saveClient; window.delClient=delClient;
+window.editCampaign=editCampaign; window.saveCampaign=saveCampaign; window.delCampaign=delCampaign;
+window.importAdsModal=importAdsModal; window.confirmImport=confirmImport; window.runAiAds=runAiAds; window.showReport=showReport;
+window.editLead=editLead; window.saveLead=saveLead; window.moveLead=moveLead; window.saveLeadDetail=saveLeadDetail; window.delLead=delLead;
+window.genLeadMessage=genLeadMessage; window.aiQualify=aiQualify; window.importLeadsModal=importLeadsModal; window.confirmLeadImport=confirmLeadImport; window.exportLeadsCSV=exportLeadsCSV;
+window.saveStrategy=saveStrategy; window.runAiStrategy=runAiStrategy;
+window.editProspect=editProspect; window.saveProspect=saveProspect; window.delProspect=delProspect; window.saveProspectDetail=saveProspectDetail; window.genOutreach=genOutreach;
+window.renderSettings=renderSettings; window.saveSettings=saveSettings; window.testKey=testKey; window.exportBackup=exportBackup; window.wipeData=wipeData;
+window.closeModal=closeModal;
+
+/* boot */
+route('dashboard');
+</script>
+</body>
+</html>
